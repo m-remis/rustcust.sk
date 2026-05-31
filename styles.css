@@ -1,0 +1,1357 @@
+/* =========================================================
+   Static site template
+   styles.css
+   ========================================================= */
+
+/* ---- Design tokens ---------------------------------------------------- */
+:root {
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+
+    /* Content width tiers. Blocks sit in one of these two columns:
+       narrow keeps prose readable; wide gives visual blocks (cards, slideshow,
+       map, table) a little more room. The page gutter still applies, so on
+       small screens both collapse to the available width. */
+    --content-narrow: 46rem;
+    --content-wide: 56rem;
+
+    /* Back-compat alias: some rules / older edits referenced --max-width. */
+    --max-width: var(--content-narrow);
+
+    /* Uniform vertical rhythm between consecutive blocks in a section. */
+    --block-gap: 1.5rem;
+
+    --gutter: clamp(1.25rem, 4vw, 2.5rem);
+    --radius: 14px;
+    --radius-sm: 10px;
+
+    --transition: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark (default) */
+[data-theme="dark"] {
+    /* — Backgrounds — */
+    --bg-base: #0e0f13; /* page background */
+    --bg-panel: rgba(22, 24, 30, 0.62); /* cards / link rows (translucent) */
+    --bg-panel-solid: #16181e; /* mobile drawer, buttons (opaque) */
+
+    /* — Text — */
+    --text: #ecedf1; /* headings + body */
+    --text-soft: #a6a9b4; /* secondary / lead text */
+    --text-faint: #6f7280; /* footer / captions */
+
+    /* — Menu / nav — */
+    --menu-text: #a6a9b4; /* idle nav link */
+    --menu-text-active: #ecedf1; /* hovered / active nav link */
+    --menu-hover-bg: rgba(138, 180, 255, 0.14); /* hover pill behind link */
+
+    /* — Accents & lines — */
+    --accent: #8ab4ff;
+    --accent-soft: rgba(138, 180, 255, 0.14);
+    --border: rgba(255, 255, 255, 0.10);
+
+    /* — Background-image overlay & header (advanced) — */
+    --overlay: rgba(10, 11, 14, 0.40);
+    --overlay-top: rgba(14, 15, 19, 0.79);
+    --overlay-bottom: rgba(14, 15, 19, 0.98);
+    --header-bg: rgba(14, 15, 19, 0.82);
+    --panel-blur: 14px;
+
+    /* — Carousel (uses the tokens above; these are the only extras) — */
+    --carousel-scrim: rgba(0, 0, 0, 0.55); /* caption gradient over image */
+    --carousel-chip-bg: rgba(0, 0, 0, 0.45); /* "n / total" counter chip */
+    --carousel-chip-text: #f4f5f8;
+}
+
+/* Light */
+[data-theme="light"] {
+    /* — Backgrounds — */
+    --bg-base: #ffffff; /* page background */
+    /* Cards/rows are more opaque in light mode so text sits on a near-solid
+       surface instead of letting the background photo bleed through. */
+    --bg-panel: rgba(248, 248, 250, 0.90); /* cards / link rows */
+    --bg-panel-solid: #f1f1f4; /* mobile drawer, buttons (opaque) */
+
+    /* — Text — */
+    --text: #15161a; /* headings + body */
+    --text-soft: #4b4d55; /* secondary / lead text */
+    --text-faint: #212123; /* footer / captions */
+
+    /* — Menu / nav — */
+    --menu-text: #4b4d55; /* idle nav link */
+    --menu-text-active: #15161a; /* hovered / active nav link */
+    --menu-hover-bg: rgba(59, 91, 219, 0.10); /* hover pill behind link */
+
+    /* — Accents & lines — */
+    --accent: #3b5bdb;
+    --accent-soft: rgba(59, 91, 219, 0.10);
+    --border: rgba(0, 0, 0, 0.12);
+
+    /* — Background-image overlay & header (advanced) — */
+    /* Stronger than before: in light mode the background photo was competing
+       with content (washed-glass look). These heavier overlays push the photo
+       back so cards/text read cleanly while still showing the image. */
+    --overlay: rgba(255, 255, 255, 0.55);
+    --overlay-top: rgba(255, 255, 255, 0.90);
+    --overlay-bottom: rgba(255, 255, 255, 0.88);
+    --header-bg: rgba(255, 255, 255, 0.90);
+    --panel-blur: 14px;
+
+    /* — Carousel (caption scrim/chip stay dark for legibility over photos) — */
+    --carousel-scrim: rgba(0, 0, 0, 0.50);
+    --carousel-chip-bg: rgba(0, 0, 0, 0.45);
+    --carousel-chip-text: #f4f5f8;
+}
+
+/* ---- Reset-ish -------------------------------------------------------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* No text I-beam anywhere — mouse stays a normal arrow over text.
+   Interactive elements still get the pointer hand below. */
+* {
+    cursor: default;
+}
+
+a, button, [role="tab"], label, summary,
+input[type="checkbox"], input[type="radio"],
+.menu-toggle, .theme-toggle {
+    cursor: pointer;
+}
+
+/* No blinking text caret on non-editable content. Clicking text focuses the
+   <main> container (it's focusable so the skip-link can target it), which would
+   otherwise show an editing caret. Real form fields keep a normal caret + cursor. */
+* {
+    caret-color: transparent;
+}
+
+input, textarea, [contenteditable] {
+    caret-color: auto;
+    cursor: text;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+
+    /* Reserve vertical scrollbar space even on tabs that do not need scrolling.
+       Without this, switching from a short tab to a tall tab makes the browser
+       add the right scrollbar, shrink the layout viewport, and visually squish
+       / shift the centered content by the scrollbar width. */
+    scrollbar-gutter: stable;
+}
+
+/* Fallback for older browsers that do not support scrollbar-gutter.
+   Keep this on the root scroll container, not body, so the page layout width
+   stays consistent between short and long tabs. */
+@supports not (scrollbar-gutter: stable) {
+    html {
+        overflow-y: scroll;
+    }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans);
+    font-size: clamp(1rem, 0.96rem + 0.2vw, 1.075rem);
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--bg-base);
+    overflow-x: hidden;
+    /* Don't let late-loading content (background image, map iframe) pin the
+       viewport to a nearby element and drag the scroll position on refresh. */
+    overflow-anchor: none;
+    transition: background-color var(--transition), color var(--transition);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Kill fake mobile/touch focus rings.
+   Focus styling appears only after real keyboard navigation. */
+:focus {
+    outline: none;
+}
+
+body.keyboard-nav :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+body:not(.keyboard-nav) :focus-visible {
+    outline: none;
+}
+
+/* Extra protection for mobile Firefox / touch browsers. */
+@media (hover: none), (pointer: coarse) {
+    a:focus,
+    button:focus,
+    [role="tab"]:focus,
+    a:focus-visible,
+    button:focus-visible,
+    [role="tab"]:focus-visible {
+        outline: none;
+    }
+}
+
+/* Remove the grey/blue tap-highlight rectangle mobile browsers draw on tap. */
+a, button, [role="tab"], .menu-toggle, .theme-toggle {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- Background ------------------------------------------------------- */
+.bg,
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.bg {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 600ms ease;
+}
+
+.bg.is-loaded {
+    opacity: 1;
+}
+
+.bg-overlay {
+    z-index: -1;
+    background: linear-gradient(to bottom, var(--overlay-top), var(--overlay-bottom));
+    backdrop-filter: saturate(112%);
+    transition: background var(--transition);
+}
+
+/* ---- Skip link -------------------------------------------------------- */
+.skip-link {
+    position: absolute;
+    left: 50%;
+    top: -3rem;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    z-index: 100;
+    transition: top var(--transition);
+}
+
+.skip-link:focus {
+    top: 0.75rem;
+}
+
+/* ---- Header ----------------------------------------------------------- */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem var(--gutter);
+    background: var(--header-bg);
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    backdrop-filter: blur(var(--panel-blur));
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    letter-spacing: 0.01em;
+    font-style: italic;
+    margin-right: auto;
+    transition: opacity var(--transition);
+}
+
+.brand:hover {
+    opacity: 0.7;
+}
+
+.nav-desktop {
+    display: flex;
+    gap: 0.35rem;
+    flex: none;
+}
+
+.nav-desktop a {
+    position: relative;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.95rem;
+    color: var(--menu-text);
+    border-radius: var(--radius-sm);
+    transition: color var(--transition), background var(--transition);
+}
+
+.nav-desktop a:hover {
+    color: var(--menu-text-active);
+    background: var(--menu-hover-bg);
+}
+
+.nav-desktop a.is-active {
+    color: var(--menu-text-active);
+}
+
+.nav-desktop a.is-active::after {
+    content: "";
+    position: absolute;
+    left: 0.85rem;
+    right: 0.85rem;
+    bottom: 0.15rem;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: none;
+}
+
+/* Theme toggle */
+.theme-toggle,
+.menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    backdrop-filter: blur(var(--panel-blur));
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.theme-toggle:hover,
+.menu-toggle:hover {
+    border-color: var(--accent);
+}
+
+.theme-toggle:active,
+.menu-toggle:active {
+    transform: scale(0.94);
+}
+
+.theme-toggle__icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 50%;
+    background: var(--text);
+    box-shadow: inset -0.4rem -0.4rem 0 0 var(--bg-panel-solid);
+    transition: all var(--transition);
+}
+
+[data-theme="light"] .theme-toggle__icon {
+    background: var(--text);
+    box-shadow: inset 0 0 0 0.18rem var(--bg-panel-solid);
+    transform: rotate(180deg);
+}
+
+/* Mobile menu toggle (hidden on desktop) */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-toggle__bar {
+    width: 1.1rem;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform var(--transition), opacity var(--transition);
+}
+
+.menu-toggle[aria-expanded="true"] .menu-toggle__bar:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.menu-toggle[aria-expanded="true"] .menu-toggle__bar:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle[aria-expanded="true"] .menu-toggle__bar:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ---- Brand + socials (header) ----------------------------------------- */
+/* The brand anchor is wrapped in .brand-wrap by JS so social icons can sit
+   right beside it. The wrapper takes over the brand's auto-margin so the
+   header layout (nav + actions pushed right) is unchanged. */
+.brand-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-right: auto;
+    /* Hold natural width (don't shrink or clip): the socials keep their real
+       size so they genuinely approach the nav as the window narrows. JS
+       (initHeaderFit) watches that gap and switches to the hamburger before
+       they touch, hiding both the nav and these socials. */
+    flex: none;
+}
+
+.brand-wrap .brand {
+    margin-right: 0;
+    flex: none;
+}
+
+/* ---- Socials ---------------------------------------------------------- */
+.socials {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.socials__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--menu-text);
+    transition: color var(--transition), background var(--transition);
+}
+
+.socials__link:hover {
+    color: var(--menu-text-active);
+    background: var(--menu-hover-bg);
+}
+
+.socials__label {
+    line-height: 1;
+}
+
+/* Icon takes its brand color; the label stays in the readable menu color.
+   The svg uses fill="currentColor", so we set color only on the svg here. */
+.socials__link svg {
+    display: block;
+    flex: none;
+}
+
+.socials__link--instagram svg {
+    color: #e1306c;
+}
+
+.socials__link--youtube svg {
+    color: #ff0000;
+}
+
+/* ---- Mobile nav ------------------------------------------------------- */
+.nav-mobile {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 50;
+    width: min(78vw, 20rem);
+    height: 100vh;
+    height: 100dvh;
+    padding: 5rem 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    background: var(--bg-panel-solid);
+    border-left: 1px solid var(--border);
+    transform: translateX(105%);
+    transition: transform var(--transition);
+    overflow-y: auto;
+}
+
+.nav-mobile.is-open {
+    transform: translateX(0);
+}
+
+.nav-mobile a {
+    padding: 0.9rem 1rem;
+    font-size: 1.1rem;
+    color: var(--menu-text);
+    border-radius: var(--radius-sm);
+    transition: color var(--transition), background var(--transition);
+}
+
+.nav-mobile a:hover,
+.nav-mobile a.is-active {
+    color: var(--menu-text-active);
+    background: var(--menu-hover-bg);
+}
+
+/* Social links sit at the bottom of the drawer, stacked one per row, styled
+   exactly like the header version (colored icon + visible label). The generic
+   ".nav-mobile a" rule above sets the row padding/size; these just lay them out
+   vertically and restore the inline icon+label gap. */
+.nav-mobile .socials {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.nav-mobile .socials .socials__link {
+    gap: 0.6rem;
+    font-size: 1.1rem;
+}
+
+.nav-mobile__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.nav-mobile__scrim.is-visible {
+    opacity: 1;
+}
+
+/* ---- Content ---------------------------------------------------------- */
+/* The content column is sized to the WIDE tier; narrow blocks center a
+   smaller column inside it (see .block--narrow). This way wide blocks fill
+   the column and narrow blocks sit centered within the same gutters. */
+.content {
+    width: 100%;
+    max-width: var(--content-wide);
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 3rem) var(--gutter) 3rem;
+    outline: none;
+    flex: 1 0 auto;
+}
+
+.section {
+    margin-bottom: clamp(3rem, 8vw, 5rem);
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+/* Tab panels: hidden ones are removed; active one fades in gently */
+.content > .section[hidden] {
+    display: none;
+}
+
+.section--active {
+    animation: panel-in 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .section--active {
+        animation: none;
+    }
+}
+
+/* ---- Block layout: width tiers + uniform spacing ---------------------- */
+/* Every rendered block is wrapped by JS in a .block element carrying a width
+   tier. This is the single source of truth for (a) how wide each block is and
+   (b) the vertical rhythm between blocks. Adding a new block type needs no new
+   spacing CSS — it inherits .block + .block automatically.
+
+   narrow = readable prose column; wide = visual blocks given more room. Both
+   are centered inside the content column. On small screens the gutter makes
+   them collapse to the same available width, so the tiers only diverge once
+   there's room. */
+.block {
+    width: 100%;
+    margin-inline: auto;
+}
+
+.block--narrow {
+    max-width: var(--content-narrow);
+}
+
+.block--wide {
+    max-width: var(--content-wide);
+}
+
+/* Uniform gap between consecutive blocks. Replaces the old per-pair adjacency
+   rules (.section__text + .card-grid, etc.) with one rule that covers every
+   combination, present and future. */
+.block + .block {
+    margin-top: var(--block-gap);
+}
+
+/* A section title sits above the first block; give the first block air below
+   the title without needing the block to know about it. */
+.section__title + .block {
+    margin-top: 0;
+}
+
+/* Intro / hero */
+.intro__eyebrow {
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 0.75rem;
+}
+
+.intro__title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    line-height: 1.05;
+    margin: 0 0 1rem;
+    letter-spacing: -0.01em;
+}
+
+.intro__title em {
+    font-style: italic;
+    color: var(--accent);
+}
+
+.intro__lead {
+    font-size: clamp(1.1rem, 1rem + 0.6vw, 1.3rem);
+    color: var(--text-soft);
+    margin: 0;
+}
+
+/* Section headings */
+.section__title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(1.6rem, 4vw, 2rem);
+    margin: 0 0 1.25rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+}
+
+.section__title::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+}
+
+/* Generic prose */
+.prose p {
+    color: var(--text-soft);
+    margin: 0 0 1rem;
+}
+
+.prose p:last-child {
+    margin-bottom: 0;
+}
+
+/* Card grid (services / projects) */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1rem;
+}
+
+.card {
+    padding: 1.35rem 1.4rem;
+    background: var(--bg-panel);
+    backdrop-filter: blur(var(--panel-blur));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: transform var(--transition), border-color var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+
+.card h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.card p {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.95rem;
+}
+
+a.card__link {
+    display: block;
+}
+
+.card__meta {
+    display: inline-block;
+    margin-top: 0.85rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+/* Link list (where to find me / contact) */
+.link-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.link-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-panel);
+    backdrop-filter: blur(var(--panel-blur));
+    color: var(--text);
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.link-list a:hover {
+    border-color: var(--accent);
+    transform: translateX(3px);
+}
+
+.link-list .label {
+    font-weight: 500;
+}
+
+.link-list .handle {
+    color: var(--text-faint);
+    font-size: 0.9rem;
+}
+
+/* ---- Table (price list / structured rows) ----------------------------- */
+/* A structured table rendered by buildTable() in script.js from a `table`
+   block: an optional name + blurb, then `headings` (the columns) and `rows`
+   (arrays of cells in heading order). Colors come from the same theme tokens
+   as cards and the link list, so it re-themes automatically. The .table-scroll
+   wrapper lets a wide table scroll sideways on narrow screens instead of
+   squashing columns or forcing the whole page wider. */
+
+/* Optional table name (a `table` block's `name`). Matches .carousel__name. */
+.table__name {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
+
+/* Optional blurb under a table name (a `table` block's `blurb`). */
+.table__blurb {
+    margin: 0 0 0.75rem;
+}
+
+/* Scroll container: holds the panel frame and clips the corners; scrolls
+   horizontally if the table is wider than the column. */
+.table-scroll {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow-x: auto;
+    background: var(--bg-panel);
+    backdrop-filter: blur(var(--panel-blur));
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.85rem 1.1rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Header row: serif heading style, consistent with section/slideshow names. */
+.data-table thead th {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 1.05rem;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+/* Body cells default to the softer body text color, like card/prose copy. */
+.data-table tbody td {
+    color: var(--text-soft);
+}
+
+/* Last column reads as a price/value: right-aligned, accented, won't wrap. */
+.data-table__value {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.data-table td.data-table__value {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Final row sits flush with the frame — no dangling divider. */
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Gentle row highlight on hover, matching the link-list/card feel. */
+.data-table tbody tr {
+    transition: background var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background: var(--menu-hover-bg);
+}
+
+/* ---- Map: embed mode (live Google iframe) ----------------------------- */
+.map-embed {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-panel);
+    aspect-ratio: 21 / 9; /* wider, shorter — more of a rectangle */
+}
+
+.map-embed iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    /* gently match the site mood without breaking legibility */
+    filter: saturate(0.95);
+}
+
+/* ---- Map: static mode (no iframe, clean themed card) ------------------ */
+/* Rendered when a `map` block sets mode: "static". A lightweight panel that
+   matches cards/table — location name, optional address, and the Open-in-Maps
+   button — instead of the noisier live iframe. */
+.map-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-panel);
+    backdrop-filter: blur(var(--panel-blur));
+    padding: 1.35rem 1.4rem;
+}
+
+.map-card__name {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.2;
+    color: var(--text);
+}
+
+.map-card__address {
+    margin: 0.4rem 0 0;
+    color: var(--text-soft);
+    font-size: 0.95rem;
+}
+
+/* The Open-in-Maps button row is shared by both map modes. */
+.map-open-row {
+    margin: 0.75rem 0 0;
+}
+
+/* In embed mode the row sits just under the framed map. */
+.map-embed + .map-open-row {
+    margin-top: 0.75rem;
+}
+
+.map-open-row a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.6rem;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--text);
+    font: inherit;
+    line-height: 1;
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.map-open-row a:hover {
+    border-color: var(--accent);
+}
+
+.map-open-row a:active {
+    transform: scale(0.97);
+}
+
+@media (max-width: 640px) {
+    .map-embed {
+        aspect-ratio: 4 / 5;
+    }
+}
+
+/* ---- Carousel / slideshow --------------------------------------------- */
+/* Reusable image slideshow rendered by buildCarousel() in script.js. Used by
+   a `slideshow` block. One slide = a plain framed image (.carousel--single, no
+   controls); two or more = manual carousel with prev/next buttons, dots, and an
+   "n / total" chip. Colors come from the theme tokens above so it re-themes and
+   matches cards/map automatically. */
+
+/* Optional slideshow name (a `slideshow` block's `name`). */
+.carousel__name {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
+
+/* Optional blurb under a slideshow name (a `slideshow` block's `blurb`). */
+.carousel__blurb {
+    margin: 0 0 0.75rem;
+}
+
+.carousel {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-panel);
+    backdrop-filter: blur(var(--panel-blur));
+
+    /* One canonical slideshow shape.
+       All slideshows use this frame size, and changing slides can no longer
+       resize the page based on image dimensions or caption length. */
+    --carousel-ratio: 16 / 10;
+    --carousel-caption-height: clamp(4.4rem, 11vw, 5.75rem);
+}
+
+.carousel__viewport {
+    position: relative;
+    /* Fixed frame. The slide content must fit inside this, not resize it. */
+    aspect-ratio: var(--carousel-ratio);
+    background: var(--bg-panel-solid);
+    overflow: hidden;
+}
+
+/* Slides stack inside one fixed frame; only the active one shows.
+   Important: active/single slides stay absolute too. If they become relative,
+   their caption/image content can resize the viewport and the whole slideshow
+   starts jumping again. */
+.carousel__slide {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    margin: 0;
+
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition);
+}
+
+.carousel__slide.is-active,
+.carousel--single .carousel__slide {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .carousel__slide {
+        transition: none;
+    }
+}
+
+.carousel__img {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+    display: block;
+}
+
+/* If a slide image 404s, hide the broken-image glyph; the panel background
+   shows through instead (silent fail, like the page background). */
+.carousel__img.is-broken {
+    visibility: hidden;
+}
+
+/* Number counter hidden: dots are the indicator. Keeping both is visual noise
+   and increases the chance of overlapping real image content. */
+.carousel__counter {
+    display: none;
+}
+
+/* Caption / chin.
+   Uses normal site theme tokens, not hardcoded photo-overlay colors. */
+.carousel__caption {
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+
+    height: var(--carousel-caption-height);
+    min-height: var(--carousel-caption-height);
+    max-height: var(--carousel-caption-height);
+
+    padding: 0.7rem 0.85rem;
+    overflow: hidden;
+
+    background: var(--bg-panel);
+    color: var(--text);
+    border-top: 1px solid var(--border);
+
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    backdrop-filter: blur(var(--panel-blur));
+}
+
+.carousel__title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.2;
+    color: var(--text);
+}
+
+.carousel__text {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: var(--text-soft);
+}
+
+.carousel__subtext {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: var(--text-faint);
+}
+
+/* Fixed-size carousel means captions cannot be allowed to grow forever.
+   Long text is clipped inside the reserved chin instead of resizing the frame. */
+.carousel__title,
+.carousel__text,
+.carousel__subtext {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+.carousel__title {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+}
+
+.carousel__text,
+.carousel__subtext {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+/* Prev / next buttons, vertically centered on each edge. */
+.carousel__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg-panel-solid);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.carousel__nav--prev {
+    left: 0.6rem;
+}
+
+.carousel__nav--next {
+    right: 0.6rem;
+}
+
+.carousel__nav:hover {
+    border-color: var(--accent);
+    background: var(--menu-hover-bg);
+}
+
+.carousel__nav:active {
+    transform: translateY(-50%) scale(0.92);
+}
+
+/* Dots indicator, floating inside the image without sitting on captions. */
+.carousel__dots {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 4;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.45rem;
+
+    padding: 0.35rem 0.5rem;
+    border-radius: 999px;
+
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.carousel__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 50%;
+    background: transparent;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.carousel__dot:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.carousel__dot.is-active {
+    background: #fff;
+    transform: scale(1.15);
+}
+
+@media (max-width: 640px) {
+    .carousel {
+        --carousel-ratio: 4 / 3;
+        --carousel-caption-height: clamp(4.75rem, 22vw, 6.25rem);
+    }
+
+    .carousel__nav {
+        width: 2.1rem;
+        height: 2.1rem;
+    }
+}
+
+/* Touch browsers often keep :hover stuck after a tap, especially mobile Firefox.
+   Keep hover polish on desktop, but neutralize sticky hover state on touch.
+
+   The map iframe is still visible on mobile, but non-interactive on touch.
+   That prevents Firefox/Android from hijacking random taps and opening Maps.
+   Users can intentionally open it via the explicit "Open in Maps" link. */
+@media (hover: none), (pointer: coarse) {
+    .map-embed iframe {
+        pointer-events: none;
+    }
+
+    .map-open-row {
+        text-align: center;
+    }
+
+    .brand:hover {
+        opacity: 1;
+    }
+
+    .nav-desktop a:hover,
+    .nav-mobile a:hover {
+        color: var(--menu-text);
+        background: transparent;
+    }
+
+    .nav-desktop a.is-active,
+    .nav-mobile a.is-active {
+        color: var(--menu-text-active);
+    }
+
+    .nav-mobile a.is-active {
+        background: var(--menu-hover-bg);
+    }
+
+    .theme-toggle:hover,
+    .menu-toggle:hover,
+    .map-open-row a:hover {
+        border-color: var(--border);
+    }
+
+    .card:hover {
+        transform: none;
+        border-color: var(--border);
+    }
+
+    .link-list a:hover {
+        transform: none;
+        border-color: var(--border);
+    }
+
+    /* Table: drop the sticky row highlight on touch (matches the rest). */
+    .data-table tbody tr:hover {
+        background: transparent;
+    }
+
+    .site-footer a:hover {
+        color: var(--text-soft);
+    }
+
+    /* Socials: neutralize sticky hover on touch (matches the rest of the site) */
+    .socials__link:hover {
+        color: var(--menu-text);
+        background: transparent;
+    }
+
+    /* Carousel: keep buttons usable but drop sticky hover styling on touch. */
+    .carousel__nav:hover {
+        border-color: var(--border);
+        background: var(--bg-panel-solid);
+    }
+
+    .carousel__dot:hover {
+        background: transparent;
+    }
+
+    .carousel__dot.is-active:hover {
+        background: #fff;
+    }
+}
+
+/* ---- Footer ----------------------------------------------------------- */
+.site-footer {
+    width: 100%;
+    max-width: none;
+    flex-shrink: 0;
+    padding: 1rem clamp(1.5rem, 5vw, 4rem) 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+}
+
+.site-footer a {
+    color: var(--text-soft);
+}
+
+.site-footer a:hover {
+    color: var(--accent);
+}
+
+/* ---- Responsive ------------------------------------------------------- */
+
+/* Mobile nav mode, triggered two ways that behave identically:
+   (1) genuinely small screens via the media query below;
+   (2) the .force-mobile-nav class, added by JS (initHeaderFit) the instant the
+       desktop nav and the header socials would touch. In that mode the desktop
+       nav AND the header socials are both hidden and the hamburger takes over —
+       the socials still live in the mobile drawer, so nothing is lost.
+   CSS can't @media on a class, so the two triggers are kept as parallel rules. */
+.site-header.force-mobile-nav .nav-desktop {
+    display: none;
+}
+
+.site-header.force-mobile-nav .brand-wrap .socials {
+    display: none;
+}
+
+.site-header.force-mobile-nav .menu-toggle {
+    display: inline-flex;
+}
+
+@media (max-width: 640px) {
+    .nav-desktop {
+        display: none;
+    }
+
+    /* On small screens the header socials are hidden too; they appear in the
+       drawer instead. */
+    .brand-wrap .socials {
+        display: none;
+    }
+
+    .menu-toggle {
+        display: inline-flex;
+    }
+
+    .link-list a {
+        padding: 1rem 1.1rem;
+    }
+
+    /* Tighten table cell padding a touch on small screens. */
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 0.85rem;
+    }
+}
+
+/* Mobile drawer is fixed/overlayed.
+   Do NOT lock vertical body scroll here. On some mobile browsers / scrollbar
+   setups, changing body overflow while the drawer is open changes the viewport
+   calculation and makes the centered content look pushed or narrower.
+
+   Keep the same horizontal overflow behavior as the normal body state so opening
+   the menu does not change layout width. */
+body.menu-open {
+    overflow-x: hidden;
+}
+
+/*
+  Built from m-remis/static-web-template
+  https://github.com/m-remis/static-web-template
+*/

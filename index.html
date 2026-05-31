@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <title>Company — Name</title>
+    <meta name="description" content="Lorem ipsum dolor sit amet, consectetur adipiscing elit."/>
+    <meta name="author" content="Name"/>
+    <meta name="theme-color" content="#0e0f13"/>
+
+    <!-- Open Graph / social -->
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="Company — Name"/>
+    <meta property="og:description" content="Lorem ipsum dolor sit amet, consectetur adipiscing elit."/>
+    <meta property="og:url" content="https://m-remis.github.io/static-web-template/"/>
+    <meta name="twitter:card" content="summary"/>
+
+    <link rel="canonical" href="https://m-remis.github.io/static-web-template/"/>
+    <link rel="icon" href="assets/favicon.ico" sizes="any"/>
+    <link rel="manifest" href="site.webmanifest"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
+          rel="stylesheet"/>
+
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body data-theme="dark">
+<!-- Background layer (image + overlay), painted by JS -->
+<div class="bg" id="bg" aria-hidden="true"></div>
+<div class="bg-overlay" aria-hidden="true"></div>
+
+<!-- Skip link for keyboard users -->
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+    <a class="brand" href="#home" id="brand" aria-label="Home"></a>
+
+    <!-- Desktop navigation -->
+    <nav class="nav-desktop" id="navDesktop" aria-label="Primary"></nav>
+
+    <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme"
+                aria-pressed="false">
+            <span class="theme-toggle__icon" aria-hidden="true"></span>
+        </button>
+
+        <!-- Mobile menu trigger -->
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false"
+                aria-controls="navMobile">
+            <span class="menu-toggle__bar"></span>
+            <span class="menu-toggle__bar"></span>
+            <span class="menu-toggle__bar"></span>
+        </button>
+    </div>
+</header>
+
+<!-- Mobile navigation (separate behavior from desktop) -->
+<nav class="nav-mobile" id="navMobile" aria-label="Mobile" aria-hidden="true"></nav>
+<div class="nav-mobile__scrim" id="navScrim" hidden></div>
+
+<main id="main" class="content" tabindex="-1"></main>
+
+<footer class="site-footer" id="siteFooter"></footer>
+
+<script src="script.js" defer></script>
+</body>
+<!--
+  Built from m-remis/static-web-template
+  https://github.com/m-remis/static-web-template
+-->
+</html>

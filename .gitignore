@@ -1,0 +1,35 @@
+# OS junk
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local environment / secrets
+.env
+.env.*
+
+# This is a no-build static site — there shouldn't be any of these,
+# but ignore them in case a tool ever drops them in.
+node_modules/
+dist/
+build/
+.cache/
+.parcel-cache/
+.tmp/

@@ -1,0 +1,63 @@
+/* 404.css — only the 404-specific layout.
+   Colors, fonts, and theme tokens are inherited from styles.css,
+   which this page also loads. Re-theming styles.css updates this page too. */
+
+body {
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.error {
+    max-width: 30rem;
+}
+
+.error__code {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(5rem, 22vw, 9rem);
+    line-height: 1;
+    margin: 0;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+}
+
+.error__title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+    margin: 0.5rem 0 0.75rem;
+}
+
+.error__lead {
+    color: var(--text-soft);
+    margin: 0 auto 2rem;
+    max-width: 24rem;
+}
+
+.error__home {
+    display: inline-block;
+    padding: 0.7rem 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    background: var(--accent-soft);
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.error__home:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.error__home:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+/*
+  Built from m-remis/static-web-template
+  https://github.com/m-remis/static-web-template
+*/
