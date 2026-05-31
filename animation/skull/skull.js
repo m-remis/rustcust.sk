@@ -27,18 +27,17 @@
 const ASSET_DIR = "animation/skull/assets/";
 
 const BLINK_FRAMES = [
-    "icon_blink_00_open.png", // 0 - fully open / resting
+    "icon_base.png", // 0 - fully open / resting
     "icon_blink_01.png",
     "icon_blink_02.png",
     "icon_blink_03.png",
     "icon_blink_04.png",
     "icon_blink_05.png",
-    "icon_blink_06.png", // 6 - fully shut
 ];
 
 const IDLE_FRAME = BLINK_FRAMES[0];        // shown between blinks
-const ANGRY_FRAME = "skull-angry.png";     // shown while angry
-const DIZZY_FRAME = "skull-dizzy.png";     // shown after the spin
+const ANGRY_FRAME = "icon_angry.png";     // shown while angry
+const DIZZY_FRAME = "icon_dizzy.png";     // shown after the spin
 
 // Per-frame hold time, in ms. Lower = faster blink.
 const FRAME_MS = 28;

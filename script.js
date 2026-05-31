@@ -1492,8 +1492,7 @@ function initTheme() {
     if (!toggle) return;
 
     const stored = getStoredTheme();
-    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-    const theme = stored || (prefersLight ? "light" : "dark");
+    const theme = stored || "dark";
 
     applyTheme(theme);
 
