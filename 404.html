@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sk">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-    <title>404 — Not found · Company</title>
+    <title>404 — Stránka sa nenašla · RustCust</title>
     <meta name="robots" content="noindex"/>
     <meta name="theme-color" content="#0e0f13" id="themeColorMeta"/>
 
@@ -19,29 +19,32 @@
     <link rel="icon" href="assets/favicon.ico" sizes="any"/>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Oswald:wght@500;600;700&display=swap"
           rel="stylesheet"/>
     <link rel="stylesheet" href="styles.css"/>
     <link rel="stylesheet" href="404.css"/>
 </head>
 <body data-theme="dark">
 <main class="error">
+    <div class="error__skull" aria-hidden="true">
+        <img src="animation/skull/assets/skull-dizzy.png" alt=""/>
+    </div>
     <p class="error__code">404</p>
-    <h1 class="error__title">This page wandered off.</h1>
-    <p class="error__lead">The link is broken, the page moved, or it never existed. Either way — let's get you back.</p>
-    <a class="error__home" href=".">← Back to home</a>
+    <h1 class="error__title">Táto stránka odišla na výlet.</h1>
+    <p class="error__lead">Odkaz je nefunkčný, stránka sa presunula alebo nikdy neexistovala. Tak či onak — poďme ťa dostať späť do dielne.</p>
+    <a class="error__home" href=".">← Späť na úvod</a>
 </main>
 
 <script>
     // Match the saved theme so the 404 page feels continuous with the site.
+    // Dark is the default; a previously saved choice wins. System setting is ignored.
     (function () {
         var t = "dark";
 
         try {
-            t = localStorage.getItem("theme-preference") ||
-                (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+            t = localStorage.getItem("theme-preference") || "dark";
         } catch (e) {
-            // localStorage or matchMedia can fail in locked-down browsers.
+            // localStorage can fail in locked-down browsers.
         }
 
         document.body.dataset.theme = t;
@@ -55,8 +58,4 @@
     })();
 </script>
 </body>
-<!--
-  Built from m-remis/static-web-template
-  https://github.com/m-remis/static-web-template
--->
 </html>

@@ -5,6 +5,8 @@
 
 "use strict";
 
+import {initSkull} from "./animation/skull/skull.js";
+
 /* ----------------------------------------------------------------------
    1. CONTENT ◀━━ EDIT THIS BLOCK
 
@@ -99,206 +101,582 @@
 let SITE = {
     // OPTIONAL: point this at a JSON endpoint to load content from your own
     // backend instead of editing this file. Any keys the JSON returns override
-    // the defaults below; anything it omits falls back to what's here. Leave it
-    // null to use the inline content as-is. Example: "/api/site.json"
+    // the defaults below; anything it omits falls back to what's here.
+    //
+    // For this RustCust version, keep it null if you paste this directly into
+    // script.js. If you later move the content into an external JSON file, set:
+    //
+    // dataUrl: "site.json"
+    //
+    // Important: real JSON cannot contain these comments.
     dataUrl: null,
 
-    brand: "Company",
+    brand: "RustCust",
 
     // The tabs, in order. `id` ties each one to a key in `sections` below.
+    //
+    // Client wanted the homepage split into:
+    // - Servis
+    // - Guiding
+    // - Custom
+    //
+    // Contact stays as its own tab because people should not hunt for phone,
+    // email, Instagram, or address.
     nav: [
-        {id: "home", label: "Home"},
-        {id: "services", label: "Services"},
-        {id: "find-me", label: "Where to find me"},
-        {id: "projects", label: "Projects"},
-        {id: "contact", label: "Contact"},
+        {id: "home", label: "Domov"},
+        {id: "servis", label: "Servis"},
+        {id: "guiding", label: "Guiding"},
+        {id: "custom", label: "Custom"},
+        {id: "findme", label: "Kde ma nájdete"},
+        {id: "kontakt", label: "Kontakt"},
     ],
 
-    // Every section, keyed by the nav id. Each is { title?, blocks: [...] }.
+    // Every section, keyed by the nav id.
+    //
+    // Each section is:
+    //
+    // sectionId: {
+    //     title: "Optional section heading",
+    //     blocks: [
+    //         { type: "text", ... },
+    //         { type: "cards", ... },
+    //         { type: "table", ... },
+    //         { type: "slideshow", ... },
+    //         ...
+    //     ],
+    // }
+    //
+    // To rearrange the page, move blocks up/down. No hardcoded per-tab layout.
     sections: {
         home: {
             // No title here — the hero block carries its own big headline.
+            //
+            // Homepage strategy:
+            // - short intro
+            // - explain RustCust in one sentence
+            // - three cards leading to Servis / Guiding / Custom
+            // - visual proof via slideshow
             blocks: [
                 {
                     type: "hero",
-                    // Wide so the hero aligns with the slideshow below it
-                    // (same left edge / column width) instead of sitting in
-                    // the narrower centered prose column.
                     width: "wide",
-                    eyebrow: "Company",
-                    // <em>…</em> renders in the accent color. Keep the title
-                    // short and the lead to a sentence or two — see the content
-                    // length guidance above.
-                    title: "A demo for the <em>static site micro-engine</em>.",
-                    lead: "A zero-dependency template for polished, responsive sites built from reusable config-driven blocks.",
+                    eyebrow: "RustCust — cyklodielňa",
+
+                    // <em>…</em> renders in the accent color.
+                    // Keep this short. Long hero headlines look like ass on mobile.
+                    title: "Servis bicyklov a lyží, custom úpravy a guiding v <em>Rajci</em>.",
+
+                    // One or two short sentences max.
+                    // Extra explanation belongs in a text block below.
+                    lead: "Bla bla bla nejaky text",
                 },
                 {
-                    // Longer explanation lives in its own text block, not the
-                    // hero lead — so the hero stays tight on mobile. Wide to
-                    // match the hero + slideshow column above and below it.
                     type: "text",
                     width: "wide",
-                    text: "Want a website? Contact me at <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=static_web_example/\" target=\"_blank\" rel=\"noopener noreferrer\">michal-remis.com</a>. Tested on Chromium, Firefox and Safari, on desktop and mobile.",
+
+                    text: "RustCust je malá cyklodielňa v Rajci. Namiesto anonymného servisu ponúka osobný prístup, praktické riešenia a prácu, ktorú je vidieť na výsledku.",
+                },
+                {
+                    type: "cards",
+                    linked: true,
+
+                    // These are the three homepage pillars the client asked for.
+                    // Each card links to its own tab via hash.
+                    items: [
+                        {
+                            title: "Servis",
+                            body: "Diagnostika, nastavenie, umývanie, opravy bicyklov, ručný servis lyží a snowboardov v zimnom období.",
+                            meta: "Cenník a podmienky",
+                            url: "#servis",
+                        },
+                        {
+                            title: "Guiding",
+                            body: "Lokálne výjazdy, bikeškola a sprevádzanie po trasách v okolí Rajca a Rajeckej doliny.",
+                            meta: "Balíky a rezervácia",
+                            url: "#guiding",
+                        },
+                        {
+                            title: "Custom",
+                            body: "Zákazkové úpravy, prestavby retro bicyklov, custom sedlá a drobnosti na mieru.",
+                            meta: "Projekty a úpravy",
+                            url: "#custom",
+                        },
+                    ],
                 },
                 {
                     type: "slideshow",
+                    name: "RustCust v skratke",
+
+                    // Replace these placeholders with real RustCust images.
+                    // Good homepage images:
+                    // - workshop / dielňa
+                    // - bike service detail
+                    // - riding / guiding
+                    // - finished custom bike
+                    //
+                    // With your preview/lightbox feature, users can click images
+                    // and open them larger.
                     slides: [
                         {
-                            src: "assets/slides/mountains.jpg",
-                            title: "Lorem ipsum",
-                            caption: "First slide caption",
-                            text: "Optional smaller line of supporting text.",
+                            src: "assets/slides/shop.jpg",
+                            title: "Cyklodielňa v Rajci",
+                            caption: "Servis, opravy a úpravy bicyklov.",
                         },
                         {
-                            src: "assets/slides/church.jpg",
-                            title: "Dolor sit amet",
-                            caption: "Second slide caption",
+                            src: "assets/slides/flight.jpg",
+                            title: "Guiding",
+                            caption: "Lokálne trasy a výjazdy v okolí Rajca.",
                         },
                         {
-                            src: "assets/slides/lake.jpg",
-                            caption: "Third slide caption",
+                            src: "assets/slides/peugeot.jpg",
+                            title: "Custom práca",
+                            caption: "Retro bicykle, prestavby a detaily na mieru.",
                         },
                     ],
                 },
             ],
         },
 
-        services: {
-            title: "Services",
+        servis: {
+            title: "Servis",
+
+            // Service tab strategy:
+            // - explain what he does
+            // - show service categories
+            // - show actual price table
+            // - show service conditions
+            // - end with contact CTA links
+            // - include service/workshop photos
             blocks: [
                 {
+                    type: "text",
+
+                    // Important: pricing disclaimer belongs near the top.
+                    // Bike service is not a clean e-shop product because the final
+                    // price depends on bike condition, parts, and hidden problems.
+                    text: "Servis bicyklov, cyklohygiena a v zimnom období aj ručný servis lyží a snowboardov. Každý bicykel je iný, preto sa výsledná cena môže líšiť podľa stavu, rozsahu práce a použitých dielov.",
+                },
+                {
                     type: "cards",
+
+                    // Quick service category overview before the full cenník.
                     items: [
                         {
-                            title: "Lorem ipsum",
-                            body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.",
+                            title: "Bicykle",
+                            body: "Diagnostika, nastavenie bŕzd a radenia, centrovanie, kontrola spojov, premazanie a bežné servisné úkony.",
+                            meta: "Od diagnostiky po veľký servis",
                         },
                         {
-                            title: "Dolor sit amet",
-                            body: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.",
+                            title: "Cyklohygiena",
+                            body: "Základné alebo detailné umytie bicykla vrátane čistenia pohonu, sušenia a premazania.",
+                            meta: "Čistý bike jazdí lepšie",
                         },
                         {
-                            title: "Consectetur",
-                            body: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.",
+                            title: "Lyže a snowboardy",
+                            body: "V zimnom období ručný servis lyží a snowboardov podľa dohody.",
+                            meta: "Zimný servis",
                         },
                     ],
                 },
                 {
                     type: "table",
-                    name: "Pricing",
-                    blurb: "An optional line of text under the table name.",
-                    headings: ["Service", "Duration", "Price"],
+                    name: "Cenník servisu bicyklov",
+
+                    // Keep the warning. It prevents customers from treating
+                    // complex service work like a fixed checkout price.
+                    blurb: "Ceny sú orientačné a môžu sa líšiť podľa stavu bicykla a náročnosti práce. Materiál nie je zahrnutý v cene služby.",
+
+                    // Last column is styled as value/price by your table CSS.
+                    headings: ["Úkon", "Popis", "Cena"],
                     rows: [
-                        ["Lorem ipsum", "30 min", "€25"],
-                        ["Dolor sit amet", "2 hr", "€60"],
-                        ["Consectetur", "15 min", "€10"],
+                        [
+                            "Diagnostika a kontrola bicykla",
+                            "Základná kontrola stavu bicykla.",
+                            "12 €",
+                        ],
+                        [
+                            "Malý servis",
+                            "Diagnostika, nastavenie bŕzd a prehadzovačiek, kontrola a premazanie spojov, dotiahnutie skrutiek momentovým kľúčom, čistenie a premazanie reťaze, dofúkanie kolies.",
+                            "30 €",
+                        ],
+                        [
+                            "Stredný servis",
+                            "Malý servis + centrovanie kolies, kontrola a nastavenie nábojov.",
+                            "45 €",
+                        ],
+                        [
+                            "Veľký servis",
+                            "Stredný servis + umývanie bicykla, dôkladné vyčistenie pohonu ultrazvukom, premazanie a nastavenie pohonu, čistenie a odmastenie bŕzd, kontrola a premazanie ložísk v hlavovom a stredovom zložení, výmena bowdenov a laniek.",
+                            "95 €",
+                        ],
+                        [
+                            "Základné umytie",
+                            "Celkové umytie bicykla, sušenie, premazanie reťaze.",
+                            "15 €",
+                        ],
+                        [
+                            "Detailné umytie",
+                            "Základné umytie + čistenie pohonu v ultrazvuku, následné premazanie a čistenie citlivých súčiastok parou.",
+                            "25 €",
+                        ],
+                        [
+                            "Mimo-cenníkové úkony",
+                            "Práca mimo základného cenníka podľa dohody.",
+                            "35 €/hod",
+                        ],
                     ],
                 },
-            ],
-        },
+                {
+                    type: "table",
+                    name: "Podmienky servisu",
 
-        "find-me": {
-            title: "Where to find me",
-            blocks: [
-                {
-                    type: "text",
-                    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.",
-                },
-                {
-                    type: "map",
-                    // mode "embed" (default) = live Google iframe; "static" =
-                    // clean card with no iframe (label + optional address +
-                    // button). Switch by setting mode: "static".
-                    mode: "embed",
-                    // Google Maps → Share → Embed a map → copy the src.
-                    embed: "https://maps.google.com/maps?q=Times+Square,New+York,NY&z=15&output=embed",
-                    // Normal share link used by the "Open in Maps" button.
-                    url: "https://www.google.com/maps/search/?api=1&query=Times%20Square%2C%20New%20York%2C%20NY",
-                    // Used as the iframe's accessible title and, in static mode,
-                    // as the card's location name.
-                    label: "Times Square, New York",
-                    // Optional: shown as an address line in static mode only.
-                    address: "Manhattan, NY 10036, USA",
+                    // This is better as a table than as a wall of paragraphs.
+                    // User sees the rule and the explanation quickly.
+                    headings: ["Podmienka", "Detail"],
+                    rows: [
+                        [
+                            "Odhad ceny",
+                            "Odhadovaná cena servisu sa môže líšiť od reálnej ceny. Každý bicykel je jedinečný.",
+                        ],
+                        [
+                            "Schválenie práce",
+                            "Akýkoľvek zákrok sa vykonáva až po odsúhlasení zákazníkom.",
+                        ],
+                        [
+                            "Retro a vintage bicykle",
+                            "Servis starších bicyklov môže byť časovo a technicky náročnejší.",
+                        ],
+                        [
+                            "Doplnky",
+                            "Doplnky, ktoré by sa mohli poškodiť pri manipulácii, je potrebné vopred demontovať.",
+                        ],
+                        [
+                            "Nadmerne špinavý bicykel",
+                            "Pri nadmerne špinavom bicykli môže byť účtovaný poplatok za čistenie 15 €.",
+                        ],
+                        [
+                            "Skladovanie",
+                            "Ak si zákazník nevyzdvihne bicykel do troch pracovných dní od dohodnutého termínu, môže byť účtované skladovanie 2 €/deň.",
+                        ],
+                    ],
                 },
                 {
                     type: "slideshow",
-                    name: "My place",
+                    name: "Servis a dielňa",
+
                     slides: [
-                        {src: "assets/slides/nature.jpg",
-                            title: "Lorem ipsum",
-                            caption: "First slide caption",
-                            text: "Optional smaller line of supporting text.",
+                        {
+                            src: "assets/slides/mr_fix.jpg",
+                            title: "Servis bicyklov",
+                            caption: "Diagnostika, nastavenie a opravy.",
+                        },
+                        {
+                            src: "assets/slides/mr_fix_2.jpg",
+                            title: "Servis bicyklov",
+                            caption: "Diagnostika, nastavenie a opravy.",
+                        },
+                        {
+                            src: "assets/slides/mr_clean.jpg",
+                            title: "Cyklohygiena",
+                            caption: "Čistenie a starostlivosť o pohon.",
                         },
                     ],
                 },
             ],
         },
 
-        projects: {
-            title: "Projects",
-            // Reorder these blocks to rearrange the section. Right now: a blurb,
-            // then the project cards, then two slideshows. Move any block up or
-            // down — e.g. put a slideshow first — just by moving it in this list.
+        guiding: {
+            title: "Guiding",
+
+            // Guiding tab strategy:
+            // - do NOT build a real e-shop
+            // - present guiding as packages / booking options
+            // - prices can stay "dohodou" until he confirms them
+            // - CTA should be reservation/contact, not checkout
             blocks: [
                 {
                     type: "text",
-                    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.",
+                    text: "Guiding je pre ľudí, ktorí chcú spoznať lokálne trasy, jazdiť istejšie alebo si dať výjazd bez toho, aby museli riešiť plánovanie. Vhodné pre jednotlivcov, dvojice aj malé skupiny.",
                 },
                 {
                     type: "cards",
-                    linked: true,
+
+                    // These are “eshop-ish” visually, but without cart/payment.
+                    // That is the right compromise for a small local guiding offer.
                     items: [
                         {
-                            title: "Lorem ipsum",
-                            body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                            meta: "Lorem",
-                            url: "#",
+                            title: "Lokálny výjazd",
+                            body: "Krátky výjazd v okolí Rajca podľa kondície a skúseností jazdcov.",
+                            meta: "Jednoduchý štart",
                         },
                         {
-                            title: "Dolor sit",
-                            body: "Sed do eiusmod tempor incididunt ut labore et dolore magna.",
-                            meta: "Ipsum",
-                            url: "#",
+                            title: "Individuálny guiding",
+                            body: "Trasa, tempo a náročnosť podľa dohody. Vhodné pre ľudí, ktorí chcú jazdiť konkrétny typ terénu.",
+                            meta: "Na mieru",
                         },
                         {
-                            title: "Consectetur",
-                            body: "Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
-                            meta: "Dolor",
-                            url: "#",
+                            title: "Bikeškola",
+                            body: "Základy techniky jazdy, istota na bicykli, práca s telom a bicyklom v teréne.",
+                            meta: "Technika a istota",
                         },
                     ],
                 },
                 {
-                    type: "slideshow",
-                    name: "Slideshow",
-                    blurb: "An optional line of text under the slideshow name.",
-                    slides: [
-                        {src: "assets/slides/mountains.jpg", caption: "Lorem ipsum"},
-                        {src: "assets/slides/lake.jpg", caption: "Dolor sit amet"},
+                    type: "table",
+                    name: "Guiding balíky",
+
+                    // These are placeholders. Do not ship fake prices.
+                    // Ask RustCust to confirm exact duration, price, and maximum group size.
+                    blurb: "Tieto ceny sú zatiaľ návrh štruktúry. Konkrétne ceny a dĺžky treba potvrdiť s RustCust.",
+
+                    headings: ["Balík", "Popis", "Cena"],
+                    rows: [
+                        [
+                            "Krátky výjazd",
+                            "2–3 hodiny, lokálna trasa v okolí Rajca.",
+                            "dohodou",
+                        ],
+                        [
+                            "Poldenný guiding",
+                            "Dlhší výjazd s plánovanou trasou a prestávkami.",
+                            "dohodou",
+                        ],
+                        [
+                            "Individuálny guiding",
+                            "Trasa, tempo a náročnosť podľa dohody.",
+                            "dohodou",
+                        ],
+                        [
+                            "Bikeškola",
+                            "Základy techniky jazdy alebo individuálna práca na konkrétnych zručnostiach.",
+                            "dohodou",
+                        ],
                     ],
                 },
                 {
                     type: "slideshow",
-                    name: "Picture",
+                    name: "Výjazdy a trasy",
+
+                    // Use real guiding photos here.
+                    // Strong options:
+                    // - riding in forest
+                    // - group ride
+                    // - trail / viewpoint
+                    // - technique lesson
+
                     slides: [
-                        {src: "assets/slides/nature.jpg", caption: "Consectetur"},
+                        {
+                            src: "assets/slides/ride.jpg",
+                            title: "Lokálne trasy",
+                            caption: "Výjazdy v okolí Rajca.",
+                        },
+                        {
+                            src: "assets/slides/ride_2.jpg",
+                            title: "Bikeškola",
+                            caption: "Technika jazdy a istota na bicykli.",
+                        },
+                        {
+                            src: "assets/slides/ride_3.jpg",
+                            title: "Na mieru",
+                            caption: "Tempo a náročnosť podľa skupiny.",
+                        },
                     ],
                 },
             ],
         },
 
-        contact: {
-            title: "Contact",
+        custom: {
+            title: "Custom",
+
+            // Custom tab strategy:
+            // - make it visual
+            // - show project types
+            // - avoid rigid prices
+            // - use slideshow/lightbox heavily
             blocks: [
                 {
                     type: "text",
-                    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.",
+                    text: "Custom časť je o úpravách, opravách a prestavbách bicyklov, najmä retro a vintage kúskov. Cieľom nie je len funkčnosť, ale aj charakter, detail a výsledok, ktorý dáva bicyklu nový život.",
+                },
+                {
+                    type: "cards",
+                    items: [
+                        {
+                            title: "Retro prestavby",
+                            body: "Úpravy starších bicyklov na praktické mestské alebo štýlové jazdenie.",
+                            meta: "Nový život pre starý bike",
+                        },
+                        {
+                            title: "Custom detaily",
+                            body: "Sedlá, poťahy, drobnosti na mieru a úpravy podľa predstavy zákazníka.",
+                            meta: "Detail robí celok",
+                        },
+                        {
+                            title: "Individuálne projekty",
+                            body: "Každý custom projekt sa rieši individuálne podľa bicykla, rozpočtu a cieľa.",
+                            meta: "Cena dohodou",
+                        },
+                    ],
+                },
+                {
+                    type: "table",
+                    name: "Custom práce",
+
+                    // For custom work, hard fixed prices can backfire.
+                    // This keeps the site transparent without promising nonsense.
+                    blurb: "Pri custom práci je lepšie uvádzať orientačné kategórie, nie tvrdý e-shop cenník. Finálna cena závisí od bicykla, dielov a rozsahu zásahu.",
+
+                    headings: ["Typ práce", "Popis", "Cena"],
+                    rows: [
+                        [
+                            "Konzultácia projektu",
+                            "Zhodnotenie bicykla, predstavy, možností a odhad rozsahu práce.",
+                            "dohodou",
+                        ],
+                        [
+                            "Retro prestavba",
+                            "Úprava staršieho bicykla na nový účel alebo štýl.",
+                            "dohodou",
+                        ],
+                        [
+                            "Custom sedlo / detail",
+                            "Poťah, doplnok alebo drobná úprava na mieru.",
+                            "dohodou",
+                        ],
+                        [
+                            "Individuálny projekt",
+                            "Komplexnejšia zákazková práca podľa dohody.",
+                            "dohodou",
+                        ],
+                    ],
+                },
+                {
+                    type: "slideshow",
+                    name: "Hotové custom projekty",
+
+                    // This should be the money block.
+                    // Put best photos here:
+                    // - before/after
+                    // - full bike side profile
+                    // - detail shots
+                    // - saddle / leather / paint / cockpit details
+                    slides: [
+                        {
+                            src: "assets/slides/custom.jpeg",
+                            title: "BMX",
+                            caption: "Prestavba a úprava na mieru.",
+                        },
+                        {
+                            src: "assets/slides/custom_2.jpeg",
+                            title: "Detail práce",
+                            caption: "Custom lakovanie",
+                        },
+                        {
+                            src: "assets/slides/custom_3.jpeg",
+                            title: "Detail práce",
+                            caption: "Sedlo",
+                        },
+                        {
+                            src: "assets/slides/custom_4.jpeg",
+                            title: "Hotový projekt",
+                            caption: "Bicykel pripravený späť do života.",
+                        },
+                    ],
+                },
+            ],
+        },
+
+        findme: {
+            title: "Kde ma nájdete",
+            blocks: [
+                {
+                    type: "text",
+                    text: "Cyklodielňu RustCust nájdeš na adrese M. R. Štefánika 624/10, Rajec.",
+                },
+                {
+                    type: "map",
+
+                    // Location only. Do not reuse this address in Firemné údaje unless
+                    // it is also the official registered business address.
+                    mode: "embed",
+
+                    // Google Maps embed for the physical workshop/location.
+                    embed: "https://maps.google.com/maps?q=M.%20R.%20%C5%A0tef%C3%A1nika%20624%2F10%2C%20Rajec&z=15&output=embed",
+
+                    // Normal map link used by the "Open in Maps" button.
+                    url: "https://www.google.com/maps/search/?api=1&query=M.%20R.%20%C5%A0tef%C3%A1nika%20624%2F10%2C%20Rajec",
+
+                    label: "Mapa s polohou cyklodielne RustCust",
+                    address: "M. R. Štefánika 624/10, Rajec",
+                },
+                {
+                    type: "slideshow",
+                    name: "Cyklodielňa",
+                    slides: [
+                        {
+                            src: "assets/slides/workshop_outside.png",
+                            title: "RustCust",
+                            caption: "M. R. Štefánika 624/10",
+                            text: "Rajec",
+                        },
+                    ],
+                },
+            ],
+        },
+
+        kontakt: {
+            title: "Kontakt",
+
+            // Contact tab strategy:
+            // - no backend form
+            // - no spam magnet
+            // - use phone and email
+            // - location lives in "Kde ma nájdete"
+            // - business table should contain only confirmed official business data
+            blocks: [
+                {
+                    type: "text",
+                    text: "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme.",
                 },
                 {
                     type: "links",
                     items: [
-                        {label: "Email", handle: "name@example.com", url: "mailto:name@example.com"},
-                        {label: "Phone", handle: "+1 (000) 000-0000", url: "tel:+10000000000"},
+                        {
+                            label: "Telefón",
+                            handle: "+421 000 000 00",
+                            url: "tel:+42100000000",
+                        },
+                        {
+                            label: "Email",
+                            handle: "r@r.sk",
+                            url: "mailto:r@r.sk",
+                        },
+                    ],
+                },
+                {
+                    type: "table",
+                    name: "Firemné údaje",
+
+                    // Do not put the workshop/location address here unless it is also
+                    // the official registered business address.
+                    headings: ["Údaj", "Hodnota"],
+                    rows: [
+                        [
+                            "Prevádzka",
+                            "RustCust – cyklodielňa",
+                        ],
+                        [
+                            "Meno",
+                            "Rastislav Buchta",
+                        ],
+                        [
+                            "IČO",
+                            "0",
+                        ],
+                        [
+                            "DIČ",
+                            "0",
+                        ],
                     ],
                 },
             ],
@@ -310,22 +688,33 @@ let SITE = {
         year: new Date().getFullYear(),
     },
 
-    // Social links, shown next to the brand in the header as a colored icon
-    // plus a visible label. Swap these URLs and labels for your real ones.
-    // `icon` must match a key in the SOCIAL_ICONS map further down; to add a
-    // new platform, add an SVG there and a matching color rule in styles.css
-    // (.socials__link--<icon> svg), then reference the key here.
+    // Social links shown next to the brand in the header and inside the mobile
+    // drawer. Keep this short. Too many social links will fight the desktop nav.
+    //
+    // `icon` must match a key in SOCIAL_ICONS. Current template supports
+    // instagram/youtube unless you add more icons manually.
     socials: [
-        {label: "Instagram 1", icon: "instagram", url: "https://instagram.com/"},
-        {label: "Instagram 2", icon: "instagram", url: "https://instagram.com/"},
-        {label: "YouTube 1", icon: "youtube", url: "https://youtube.com/"},
+        {
+            label: "RustCust",
+            icon: "instagram",
+            url: "https://www.instagram.com/rustcust/",
+        },
     ],
 
-    // Background images — just add files here and to assets/background/.
+    // Background images.
+    //
+    // Replace with real RustCust background photos. Best options:
+    // - workshop atmosphere
+    // - bike detail
+    // - forest/trail/guiding shot
+    //
+    // Keep them compressed. Huge photos will make the site feel slow.
     backgrounds: [
         "assets/background/background.jpg",
         "assets/background/background_2.jpg",
         "assets/background/background_3.jpg",
+        "assets/background/background_4.jpg",
+        "assets/background/background_5.jpg",
     ],
 };
 
@@ -507,7 +896,7 @@ function buildMap(block) {
             el(
                 "p",
                 {class: "map-open-row"},
-                `<a href="${href}" target="_blank" rel="noopener noreferrer">Open in Maps</a>`
+                `<a href="${href}" target="_blank" rel="noopener noreferrer">Otvoriť Mapy</a>`
             )
         );
 
@@ -535,7 +924,7 @@ function buildMap(block) {
         el(
             "p",
             {class: "map-open-row"},
-            `<a href="${href || block.embed}" target="_blank" rel="noopener noreferrer">Open in Maps</a>`
+            `<a href="${href || block.embed}" target="_blank" rel="noopener noreferrer">Otvoriť mapy</a>`
         )
     );
 
@@ -882,15 +1271,22 @@ function renderNav() {
 
     brand.textContent = SITE.brand;
 
-    // Social links next to the brand in the header. Shown on desktop; below the
-    // mobile breakpoint the whole header row collapses to the hamburger and a
-    // copy of these links is placed inside the mobile drawer instead (below).
-    // The #brand element keeps its id and click handler — it's just moved into
-    // a flex wrapper alongside the links.
+    // Wrap the skull mascot, brand, and optional socials into one left-side
+    // header cluster. The skull starts in index.html before #brand; renderNav()
+    // moves it into .brand-wrap so header-fit treats skull + brand + socials as
+    // one unit. Build the wrapper even when there are no socials, otherwise the
+    // skull would stay outside the measured header cluster.
+    const brandWrap = el("div", {class: "brand-wrap"});
+    brand.replaceWith(brandWrap);
+
+    const skull = document.getElementById("headerSkull");
+    if (skull) {
+        brandWrap.appendChild(skull);
+    }
+
+    brandWrap.appendChild(brand);
+
     if (SITE.socials && SITE.socials.length) {
-        const brandWrap = el("div", {class: "brand-wrap"});
-        brand.replaceWith(brandWrap);
-        brandWrap.appendChild(brand);
         brandWrap.appendChild(buildSocials(SITE.socials));
     }
 
@@ -1326,17 +1722,22 @@ function initHeaderFit() {
         // Below the CSS breakpoint the media query already owns mobile mode.
         if (window.innerWidth <= 640) return;
 
-        // The rightmost social link (the last one in the row) and the first tab.
+        // The rightmost thing in the left cluster and the first tab.
+        // Prefer the last social link, but fall back to the brand/skull cluster
+        // when there are no socials, so header-fit still works.
         const socials = brandWrap.querySelectorAll(".socials__link");
+        const leftEdgeEl = socials.length
+            ? socials[socials.length - 1]
+            : brandWrap.lastElementChild;
         const firstTab = nav.querySelector("a");
 
-        if (!socials.length || !firstTab) return;
+        if (!leftEdgeEl || !firstTab) return;
 
-        const socialRight = socials[socials.length - 1].getBoundingClientRect().right;
+        const leftRight = leftEdgeEl.getBoundingClientRect().right;
         const tabLeft = firstTab.getBoundingClientRect().left;
 
-        // gap = horizontal space between the socials and the nav.
-        const gap = tabLeft - socialRight;
+        // gap = horizontal space between the left cluster and the nav.
+        const gap = tabLeft - leftRight;
 
         if (gap < BUFFER) {
             header.classList.add("force-mobile-nav");
@@ -1465,6 +1866,15 @@ async function init() {
     initHeaderFit();
     initTabs();
     initBackground();
+
+    // Skull mascot — runs after renderNav() moved #headerSkull into .brand-wrap.
+    // Wrapped so that even if the skull module fails, the rest of the site still
+    // renders normally.
+    try {
+        initSkull();
+    } catch (err) {
+        console.warn("Skull init failed:", err);
+    }
 }
 
 if (document.readyState === "loading") {

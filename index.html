@@ -26,19 +26,20 @@
           rel="stylesheet"/>
 
     <link rel="stylesheet" href="styles.css"/>
+    <link rel="stylesheet" href="animation/skull/skull.css"/>
 </head>
 <body data-theme="dark">
 <!-- Background layer (image + overlay), painted by JS -->
 <div class="bg" id="bg" aria-hidden="true"></div>
 <div class="bg-overlay" aria-hidden="true"></div>
 
-<!-- Skip link for keyboard users -->
-<a class="skip-link" href="#main">Skip to content</a>
-
 <header class="site-header">
+    <span class="header-skull" id="headerSkull" role="button" tabindex="0" aria-label="Mascot">
+        <img src="animation/skull/assets/icon_blink_00_open.png" alt=""/>
+    </span>
+
     <a class="brand" href="#home" id="brand" aria-label="Home"></a>
 
-    <!-- Desktop navigation -->
     <nav class="nav-desktop" id="navDesktop" aria-label="Primary"></nav>
 
     <div class="header-actions">
@@ -47,7 +48,6 @@
             <span class="theme-toggle__icon" aria-hidden="true"></span>
         </button>
 
-        <!-- Mobile menu trigger -->
         <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false"
                 aria-controls="navMobile">
             <span class="menu-toggle__bar"></span>
@@ -65,7 +65,7 @@
 
 <footer class="site-footer" id="siteFooter"></footer>
 
-<script src="script.js" defer></script>
+<script type="module" src="script.js"></script>
 </body>
 <!--
   Built from m-remis/static-web-template
