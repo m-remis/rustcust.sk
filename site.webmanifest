@@ -1,7 +1,7 @@
 {
   "name": "RustCust",
   "short_name": "RustCust",
-  "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  "description": "Cyklodielňa v Rajci — servis bicyklov a lyží, custom úpravy a guiding.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

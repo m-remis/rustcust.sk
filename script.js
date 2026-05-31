@@ -427,7 +427,7 @@ let SITE = {
 
                     // These are placeholders. Do not ship fake prices.
                     // Ask RustCust to confirm exact duration, price, and maximum group size.
-                    blurb: "Tieto ceny sú zatiaľ návrh štruktúry. Konkrétne ceny a dĺžky treba potvrdiť s RustCust.",
+                    blurb: "Tieto ceny sú zatiaľ návrh štruktúry",
 
                     headings: ["Balík", "Popis", "Cena"],
                     rows: [
@@ -645,11 +645,19 @@ let SITE = {
                             label: "Telefón",
                             handle: "+421 000 000 00",
                             url: "tel:+42100000000",
+                            icon: "phone",
                         },
                         {
                             label: "Email",
                             handle: "r@r.sk",
                             url: "mailto:r@r.sk",
+                            icon: "email",
+                        },
+                        {
+                            label: "Instagram",
+                            handle: "@rustcust",
+                            url: "https://www.instagram.com/rustcust/",
+                            icon: "instagram",
                         },
                     ],
                 },
@@ -761,6 +769,15 @@ const SOCIAL_ICONS = {
         '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">' +
         '<path d="M23.5 6.5a3 3 0 0 0-2.11-2.12C19.5 3.87 12 3.87 12 3.87s-7.5 0-9.39.51A3 3 0 0 0 .5 6.5C0 8.4 0 12 0 12s0 3.6.5 5.5a3 3 0 0 0 2.11 2.12c1.89.51 9.39.51 9.39.51s7.5 0 9.39-.51A3 3 0 0 0 23.5 17.5C24 15.6 24 12 24 12s0-3.6-.5-5.5zM9.6 15.6V8.4l6.27 3.6-6.27 3.6z"/>' +
         "</svg>",
+    email:
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<rect x="3" y="5" width="18" height="14" rx="2"/>' +
+        '<path d="m3 7 9 6 9-6"/>' +
+        "</svg>",
+    phone:
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>' +
+        "</svg>",
 };
 
 /* Build the row of social links shown next to the brand: a colored icon plus
@@ -859,10 +876,15 @@ function buildLinks(block) {
             attrs.rel = "noopener noreferrer";
         }
 
+        // Optional leading icon — `icon` must match a key in SOCIAL_ICONS.
+        const icon = it.icon && SOCIAL_ICONS[it.icon]
+            ? `<span class="link-list__icon" aria-hidden="true">${SOCIAL_ICONS[it.icon]}</span>`
+            : "";
+
         const a = el(
             "a",
             attrs,
-            `<span class="label">${it.label}</span><span class="handle">${it.handle}</span>`
+            `${icon}<span class="label">${it.label}</span><span class="handle">${it.handle}</span>`
         );
 
         const li = el("li");
@@ -1498,6 +1520,17 @@ function initMobileMenu() {
 
     if (!toggle || !nav || !scrim) return;
 
+    // Close button inside the drawer (frosted drawer needs an explicit X).
+    let closeBtn = nav.querySelector(".nav-mobile__close");
+    if (!closeBtn) {
+        closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "nav-mobile__close";
+        closeBtn.setAttribute("aria-label", "Close menu");
+        closeBtn.innerHTML = "&times;";
+        nav.prepend(closeBtn);
+    }
+
     let closeTimer = null;
 
     const open = () => {
@@ -1528,7 +1561,7 @@ function initMobileMenu() {
 
     toggle.addEventListener("click", () => (nav.classList.contains("is-open") ? close() : open()));
     scrim.addEventListener("click", close);
-
+    closeBtn.addEventListener("click", close);
     // Close on link tap.
     nav.addEventListener("click", (e) => {
         if (e.target.closest("a")) close();
@@ -1780,24 +1813,66 @@ function initHeaderFit() {
 ---------------------------------------------------------------------- */
 
 function initBackground() {
-    const bg = $("#bg");
+    const layers = [$("#bg"), $("#bg2")].filter(Boolean);
     const list = SITE.backgrounds;
 
-    if (!bg || !list || !list.length) return;
+    if (layers.length < 2 || !list || !list.length) {
+        // Fallback: single image, no cycling (e.g. only one layer present).
+        const bg = layers[0];
+        if (bg && list && list.length) {
+            const img = new Image();
+            img.onload = () => {
+                bg.style.backgroundImage = `url("${list[0]}")`;
+                bg.classList.add("is-active");
+            };
+            img.src = list[0];
+        }
+        return;
+    }
 
-    const src = list[Math.floor(Math.random() * list.length)];
-    const img = new Image();
+    // How long each image stays before crossfading to the next.
+    const HOLD = 8000;
 
-    img.onload = () => {
-        bg.style.backgroundImage = `url("${src}")`;
-        bg.classList.add("is-loaded");
+    let index = 0;       // which image in the list is showing
+    let front = 0;       // which layer is currently on top (0 or 1)
+
+    const show = (i, layerIndex) => {
+        const layer = layers[layerIndex];
+        const src = list[i];
+        const img = new Image();
+
+        img.onload = () => {
+            layer.style.backgroundImage = `url("${src}")`;
+
+            // Restart the drift animation from the start on this layer.
+            layer.classList.remove("is-active");
+            // Force reflow so removing + re-adding the class re-triggers the
+            // CSS animation, otherwise the browser ignores the re-add.
+            void layer.offsetWidth;
+            layer.classList.add("is-active");
+
+            // Fade the other layer out.
+            layers[1 - layerIndex].classList.remove("is-active");
+        };
+
+        img.onerror = () => {
+            // Image missing — skip to the next one on the next tick.
+        };
+
+        img.src = src;
     };
 
-    img.onerror = () => {
-        // image missing — leave plain background, no error shown
-    };
+    // Show the first image immediately on the front layer.
+    show(index, front);
 
-    img.src = src;
+    // Only cycle if there's more than one image.
+    if (list.length < 2) return;
+
+    setInterval(() => {
+        index = (index + 1) % list.length;   // next image, in order
+        front = 1 - front;                    // swap to the other layer
+        show(index, front);
+    }, HOLD);
 }
 
 /* ----------------------------------------------------------------------
