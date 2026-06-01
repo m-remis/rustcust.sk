@@ -264,7 +264,7 @@ let SITE = {
                         {
                             title: "Bicykle",
                             body: "Diagnostika, nastavenie bŕzd a radenia, centrovanie, kontrola spojov, premazanie a bežné servisné úkony.",
-                            meta: "Od diagnostiky po veľký servis",
+                            meta: "Diagnostika / veľký servis",
                         },
                         {
                             title: "Cyklohygiena",
@@ -870,7 +870,10 @@ function buildLinks(block) {
     const ul = el("ul", {class: "link-list"});
 
     items.forEach((it) => {
-        const attrs = {href: it.url};
+        const attrs = {
+            href: it.url,
+            class: it.icon ? `link-list--${it.icon}` : null,
+        };
         if (isExternalUrl(it.url)) {
             attrs.target = "_blank";
             attrs.rel = "noopener noreferrer";

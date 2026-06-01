@@ -501,6 +501,14 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     color: #ff0000;
 }
 
+.socials__link--phone svg {
+    color: #2e9e4f;
+}
+
+.socials__link--email svg {
+    color: #3b5bdb;
+}
+
 /* ---- Mobile nav ------------------------------------------------------- */
 .nav-mobile {
     position: fixed;
@@ -755,9 +763,11 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     padding: 1.35rem 1.4rem;
     background: var(--bg-panel);
     backdrop-filter: blur(var(--panel-blur));
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: var(--radius);
     transition: transform var(--transition), border-color var(--transition);
+    display: flex;
+    flex-direction: column;
 }
 
 .card:hover {
@@ -778,12 +788,13 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 }
 
 a.card__link {
-    display: block;
+    display: flex;
 }
 
 .card__meta {
     display: inline-block;
-    margin-top: 0.85rem;
+    margin-top: auto;
+    padding-top: 0.85rem;
     font-size: 0.8rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -810,6 +821,7 @@ a.card__link {
     background: var(--bg-panel);
     backdrop-filter: blur(var(--panel-blur));
     color: var(--text);
+    position: relative;
     transition: border-color var(--transition), transform var(--transition);
 }
 
@@ -820,6 +832,10 @@ a.card__link {
 
 .link-list .label {
     font-weight: 500;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
 }
 
 .link-list .handle {
@@ -835,10 +851,11 @@ a.card__link {
     color: var(--text-soft);
 }
 
-.link-list a:hover .link-list__icon {
-    color: var(--accent);
-}
-
+/* Per-platform brand colors for contact-row icons. Brand colors, not theme
+   tokens — intentionally identical in light and dark mode, and kept on hover. */
+.link-list--phone .link-list__icon { color: #2e9e4f; }
+.link-list--email .link-list__icon { color: #3b5bdb; }
+.link-list--instagram .link-list__icon { color: #e1306c; }
 /* ---- Table (price list / structured rows) ----------------------------- */
 /* A structured table rendered by buildTable() in script.js from a `table`
    block: an optional name + blurb, then `headings` (the columns) and `rows`
