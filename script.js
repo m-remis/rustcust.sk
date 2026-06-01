@@ -238,7 +238,7 @@ let SITE = {
         },
 
         servis: {
-            title: "Servis",
+            title: "Servis.",
 
             // Service tab strategy:
             // - explain what he does
@@ -386,7 +386,7 @@ let SITE = {
         },
 
         guiding: {
-            title: "Guiding",
+            title: "Guiding.",
 
             // Guiding tab strategy:
             // - do NOT build a real e-shop
@@ -486,7 +486,7 @@ let SITE = {
         },
 
         custom: {
-            title: "Custom",
+            title: "Custom.",
 
             // Custom tab strategy:
             // - make it visual
@@ -587,7 +587,7 @@ let SITE = {
         },
 
         findme: {
-            title: "Kde ma nájdete",
+            title: "Kde ma nájdete.",
             blocks: [
                 {
                     type: "text",
@@ -625,7 +625,7 @@ let SITE = {
         },
 
         kontakt: {
-            title: "Kontakt",
+            title: "Kontakt.",
 
             // Contact tab strategy:
             // - no backend form
