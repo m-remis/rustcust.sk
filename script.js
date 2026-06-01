@@ -66,6 +66,8 @@ import {initSkull} from "./animation/skull/skull.js";
        ] }
        → 1 slide  = a plain framed image
        → 2+ slides = carousel with prev/next, dots, and an "n / total" counter
+       Carousels autoplay (5s, pause on hover/focus) and any image can be
+       clicked to expand in a full-screen lightbox.
 
      { type: "table", name: "Optional heading", blurb: "Optional text",
        headings: ["Service", "Duration", "Price"],   // any number of columns
@@ -1033,16 +1035,156 @@ function buildTable(block) {
    Behavior:
    - 1 slide  → a single framed image + its caption block, no controls.
    - 2+ slides → manual carousel: prev/next buttons, a dot per slide, and an
-     "n / total" counter. Wrapping (last → first) like the W3Schools example,
-     but with real <button>s, ARIA, and keyboard arrow support so it matches
-     the rest of the template's accessibility. No autoplay (manual only);
-     honors prefers-reduced-motion via CSS.
+     "n / total" counter. Real <button>s, ARIA, and keyboard arrow support.
+   - Autoplay: advances every 5s, pauses on hover and keyboard focus, and is
+     disabled entirely under prefers-reduced-motion. Any manual interaction
+     restarts the timer so the landed-on slide gets its full dwell.
+   - Expand: every image is wrapped in a button; clicking it opens a shared
+     full-screen lightbox showing the full image letterboxed (no cropping).
 
-   Each carousel keeps its own `index` in closure scope, so multiple carousels
-   on the page never interfere with one another.
+   Each carousel keeps its own `index` and timer in closure scope, so multiple
+   carousels on the page never interfere with one another.
 ---------------------------------------------------------------------- */
 
 let carouselSeq = 0;
+
+/* Shared lightbox: one overlay reused by every carousel, created lazily on
+   first open. Shows the full image letterboxed (object-fit: contain in CSS) —
+   each image keeps its own aspect ratio inside a uniform frame, no cropping.
+
+   open(slides, startIndex) takes the clicked carousel's full slide list and the
+   index that was clicked, so prev/next (buttons + arrow keys) cycle within that
+   one carousel. Each slide is { src, caption } (caption already joined). */
+let lightboxApi = null;
+
+function getLightbox() {
+    if (lightboxApi) return lightboxApi;
+
+    const overlay = el("div", {
+        class: "lightbox",
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-label": "Zväčšený obrázok",
+        hidden: true,
+    });
+
+    const closeBtn = el("button", {
+        type: "button",
+        class: "lightbox__close",
+        "aria-label": "Zavrieť",
+    }, "&times;");
+
+    const prevBtn = el("button", {
+        type: "button",
+        class: "lightbox__nav lightbox__nav--prev",
+        "aria-label": "Predchádzajúci obrázok",
+    }, "&#10094;"); // ❮
+
+    const nextBtn = el("button", {
+        type: "button",
+        class: "lightbox__nav lightbox__nav--next",
+        "aria-label": "Ďalší obrázok",
+    }, "&#10095;"); // ❯
+
+    const img = el("img", {class: "lightbox__img", alt: ""});
+    const cap = el("p", {class: "lightbox__caption"});
+
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(prevBtn);
+    overlay.appendChild(nextBtn);
+    overlay.appendChild(img);
+    overlay.appendChild(cap);
+    document.body.appendChild(overlay);
+
+    let lastFocused = null;
+    let isOpen = false;        // tracked independently of `hidden`
+    let hideTimer = null;      // pending fade-out → hide
+    let slides = [];           // current carousel's slides
+    let index = 0;
+
+    const render = () => {
+        const s = slides[index] || {};
+        img.src = s.src || "";
+        img.alt = s.caption || "";
+        cap.textContent = s.caption || "";
+        cap.style.display = s.caption ? "" : "none";
+
+        // Hide prev/next when there's only one image.
+        const multi = slides.length > 1;
+        prevBtn.style.display = multi ? "" : "none";
+        nextBtn.style.display = multi ? "" : "none";
+    };
+
+    const go = (delta) => {
+        if (slides.length < 2) return;
+        index = (index + delta + slides.length) % slides.length;
+        render();
+    };
+
+    const close = () => {
+        isOpen = false;
+        overlay.classList.remove("is-open");
+        document.body.classList.remove("lightbox-open");
+        // Fade out, then hide + clear the src. Guarded by isOpen so a fast
+        // reopen during the fade cancels this hide (the reopen clears the timer
+        // too, below).
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+            if (!isOpen) {
+                overlay.hidden = true;
+                img.removeAttribute("src");
+            }
+            hideTimer = null;
+        }, 200);
+        if (lastFocused && lastFocused.focus) lastFocused.focus();
+    };
+
+    const open = (slideList, startIndex) => {
+        // Cancel any pending hide from a just-closed instance so reopening
+        // immediately works (this was the "can't open it again" bug).
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+
+        slides = Array.isArray(slideList) ? slideList : [];
+        index = Math.max(0, Math.min(startIndex || 0, slides.length - 1));
+        lastFocused = document.activeElement;
+        isOpen = true;
+
+        render();
+        overlay.hidden = false;
+        document.body.classList.add("lightbox-open");
+        // Next frame so the fade-in transition runs from hidden → visible.
+        requestAnimationFrame(() => overlay.classList.add("is-open"));
+        closeBtn.focus();
+    };
+
+    closeBtn.addEventListener("click", close);
+    prevBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        go(-1);
+    });
+    nextBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        go(1);
+    });
+
+    // Click on the backdrop (but not the image or any control) closes.
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) close();
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (!isOpen) return;
+        if (e.key === "Escape") close();
+        else if (e.key === "ArrowRight") go(1);
+        else if (e.key === "ArrowLeft") go(-1);
+    });
+
+    lightboxApi = {open, close, isOpen: () => isOpen};
+    return lightboxApi;
+}
 
 function buildCarousel(block) {
     block = block || {};
@@ -1079,6 +1221,15 @@ function buildCarousel(block) {
     // Viewport holds the stacked slides; only the active one is shown (CSS).
     const viewport = el("div", {class: "carousel__viewport"});
 
+    // Slide data for the lightbox (this carousel only): src + a joined caption.
+    // Prev/next in the expanded view cycles through exactly these.
+    const lightboxSlides = list.map((s, i) => ({
+        src: s.src,
+        caption:
+            [s.title, s.caption, s.text].filter(Boolean).join(" — ") ||
+            (s.title || s.caption || `Slide ${i + 1}`),
+    }));
+
     const slideNodes = list.map((s, i) => {
         const slide = el("figure", {
             class: "carousel__slide",
@@ -1099,6 +1250,14 @@ function buildCarousel(block) {
             );
         }
 
+        // The image lives inside a real <button> so it's keyboard-focusable and
+        // opens the lightbox on click/Enter/Space.
+        const trigger = el("button", {
+            type: "button",
+            class: "carousel__expand",
+            "aria-label": `Zväčšiť obrázok: ${altText}`,
+        });
+
         const img = el("img", {
             class: "carousel__img",
             src: s.src,
@@ -1114,7 +1273,9 @@ function buildCarousel(block) {
             img.classList.add("is-broken");
         });
 
-        slide.appendChild(img);
+        trigger.appendChild(img);
+        trigger.addEventListener("click", () => getLightbox().open(lightboxSlides, i));
+        slide.appendChild(trigger);
 
         // Caption block: title + caption + smaller text, any subset present.
         if (s.title || s.caption || s.text) {
@@ -1131,7 +1292,7 @@ function buildCarousel(block) {
 
     root.appendChild(viewport);
 
-    // Single slide: nothing more to wire up.
+    // Single slide: nothing more to wire up (image is still click-to-expand).
     if (!multi) {
         wrapper.appendChild(root);
         return wrapper;
@@ -1158,6 +1319,32 @@ function buildCarousel(block) {
         });
     };
 
+    // ---- Autoplay: advance every 5s; pause on hover/focus; disabled under
+    // prefers-reduced-motion. Manual nav restarts the timer (full dwell). ----
+    const AUTOPLAY_MS = 5000;
+    const prefersReducedMotion = window.matchMedia
+        && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let timer = null;
+
+    const stop = () => {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+    };
+
+    const start = () => {
+        if (prefersReducedMotion || timer) return;
+        timer = setInterval(() => setActive(index + 1), AUTOPLAY_MS);
+    };
+
+    // Pause on pointer hover and keyboard focus anywhere in the carousel.
+    root.addEventListener("mouseenter", stop);
+    root.addEventListener("mouseleave", start);
+    root.addEventListener("focusin", stop);
+    root.addEventListener("focusout", start);
+
     const prevBtn = el("button", {
         type: "button",
         class: "carousel__nav carousel__nav--prev",
@@ -1170,8 +1357,16 @@ function buildCarousel(block) {
         "aria-label": "Next slide",
     }, "&#10095;"); // ❯
 
-    prevBtn.addEventListener("click", () => setActive(index - 1));
-    nextBtn.addEventListener("click", () => setActive(index + 1));
+    // Wrap a slide change so a manual action also resets the autoplay timer,
+    // giving the slide the user landed on its full interval before advancing.
+    const manual = (fn) => () => {
+        fn();
+        stop();
+        start();
+    };
+
+    prevBtn.addEventListener("click", manual(() => setActive(index - 1)));
+    nextBtn.addEventListener("click", manual(() => setActive(index + 1)));
 
     root.appendChild(prevBtn);
     root.appendChild(nextBtn);
@@ -1193,7 +1388,7 @@ function buildCarousel(block) {
             "aria-controls": `${uid}-slide-${i}`,
             tabindex: i === 0 ? "0" : "-1",
         });
-        dot.addEventListener("click", () => setActive(i));
+        dot.addEventListener("click", manual(() => setActive(i)));
         dotWrap.appendChild(dot);
         return dot;
     });
@@ -1211,11 +1406,14 @@ function buildCarousel(block) {
         e.preventDefault();
         setActive(next);
         dots[index].focus();
+        stop();
+        start();
     });
 
     root.appendChild(dotWrap);
 
     setActive(0);
+    start(); // begin autoplay
     wrapper.appendChild(root);
     return wrapper;
 }
@@ -1239,12 +1437,6 @@ const BLOCK_RENDERERS = {
     table: buildTable,
 };
 
-/* Default width tier per block type. "narrow" keeps a column readable (text,
-   hero); "wide" gives visual blocks room to breathe (cards, slideshow, map,
-   table). Any block can override with its own `width: "narrow" | "wide"`.
-   Unknown types fall back to narrow. The actual rem widths live in styles.css
-   as --content-narrow / --content-wide, applied via the .block--narrow /
-   .block--wide wrapper classes. */
 /* Default width tier per block type. Everything defaults to "wide" so blocks
    share one consistent left edge / column width across the whole site (hero,
    text, cards, slideshow, map, table, contact links all line up). Any block can
