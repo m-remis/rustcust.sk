@@ -236,7 +236,12 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 .bg,
 .bg-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100vh;   /* fallback */
+    height: 100lvh;  /* LARGE viewport height: the tallest state (URL bar hidden), and it does NOT change as the bar slides — so no resize on scroll */
     z-index: -2;
     pointer-events: none;
 }
@@ -802,6 +807,7 @@ a.card__link {
 }
 
 /* Link list (where to find me / contact) */
+/* Link list (where to find me / contact) */
 .link-list {
     list-style: none;
     margin: 0;
@@ -813,15 +819,13 @@ a.card__link {
 .link-list a {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    gap: 0.6rem;
     padding: 0.85rem 1.1rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg-panel);
     backdrop-filter: blur(var(--panel-blur));
     color: var(--text);
-    position: relative;
     transition: border-color var(--transition), transform var(--transition);
 }
 
@@ -830,17 +834,40 @@ a.card__link {
     transform: translateX(3px);
 }
 
-.link-list .label {
-    font-weight: 500;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
+/* Icon sits first, never shrinks */
+.link-list .link-icon {
+    flex: none;
+    display: inline-flex;
 }
 
+/* Label hugs the icon on the left */
+.link-list .label {
+    font-weight: 500;
+}
+
+/* Handle pushed to the right end. margin-left:auto does the "space-between"
+   job without forcing a wrap. */
 .link-list .handle {
+    margin-left: auto;
     color: var(--text-faint);
     font-size: 0.9rem;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+/* Below this width, EVERY button stacks the handle under the label, so they
+   all stay consistent (not one wrapped, others not). Tune the 26rem to taste. */
+@media (max-width: 26rem) {
+    .link-list a {
+        flex-wrap: wrap;
+    }
+
+    .link-list .handle {
+        margin-left: 0;            /* drop to its own line, align under label */
+        flex-basis: 100%;
+        text-align: left;
+        padding-left: calc(2rem + 0.6rem); /* indent under the label, past the icon */
+    }
 }
 
 .link-list__icon {
