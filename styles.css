@@ -9,7 +9,7 @@
     /* Headings: bold/industrial condensed face. */
     --font-serif: "Oswald", "Arial Narrow", system-ui, sans-serif;
     /* Brand wordmark only: kept as the original serif. */
-    --font-brand: "Instrument Serif", Georgia, "Times New Roman", serif;
+    --font-brand: "Dancing Script", "Instrument Serif", Georgia, "Times New Roman", serif;
 
     /* Content width tiers. Blocks sit in one of these two columns:
        narrow keeps prose readable; wide gives visual blocks (cards, slideshow,
@@ -321,9 +321,9 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 
 .brand {
     font-family: var(--font-brand);
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     letter-spacing: 0.01em;
-    font-style: italic;
+    font-style: normal;
     margin-right: auto;
     transition: opacity var(--transition);
 }
