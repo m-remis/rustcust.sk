@@ -694,7 +694,7 @@ let SITE = {
     },
 
     footer: {
-        note: "Created and maintained by <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=static_web_example/\" target=\"_blank\" rel=\"noopener noreferrer\">Michal</a>.",
+        note: "Created and maintained by <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Michal</a>.",
         year: new Date().getFullYear(),
     },
 
