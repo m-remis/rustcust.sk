@@ -25,7 +25,7 @@
     --block-gap: 1.5rem;
 
     --gutter: clamp(1.25rem, 4vw, 2.5rem);
-    --radius: 14px;
+    --radius: 8px;
     --radius-sm: 10px;
 
     --transition: 220ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -80,7 +80,7 @@
 
     /* — Text — */
     --text: #15161a; /* headings + body */
-    --text-soft: #4b4d55; /* secondary / lead text */
+    --text-soft: #131415; /* secondary / lead text */
     --text-faint: #212123; /* footer / captions */
 
     /* — Menu / nav — */
@@ -91,7 +91,7 @@
     /* — Accents & lines — */
     --accent: #3b5bdb;
     --accent-soft: rgba(59, 91, 219, 0.10);
-    --border: rgba(0, 0, 0, 0.12);
+    --border: rgba(43, 43, 43, 0.49);
 
     /* — Background-image overlay & header (advanced) — */
     /* Stronger than before: in light mode the background photo was competing
@@ -960,11 +960,6 @@ a.card__link {
     font-weight: 600;
 }
 
-/* Final row sits flush with the frame — no dangling divider. */
-.data-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
 /* Gentle row highlight on hover, matching the link-list/card feel. */
 .data-table tbody tr {
     transition: background var(--transition);
@@ -1531,7 +1526,7 @@ a.card__link {
 
     /* Each row becomes a card matching the rest of the site's panels. */
     .data-table tbody tr {
-        border: 2px solid var(--border);
+        border: 1px solid var(--border);
         background: var(--bg-panel);
         backdrop-filter: blur(var(--panel-blur));
         -webkit-backdrop-filter: blur(var(--panel-blur));
