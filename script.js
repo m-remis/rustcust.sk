@@ -8,724 +8,56 @@
 import {initSkull} from "./animation/skull/skull.js";
 
 /* ----------------------------------------------------------------------
-   1. CONTENT ◀━━ EDIT THIS BLOCK
+   1. CONTENT
 
-   This SITE object is the only thing you need to touch to make the site
-   yours: brand name, navigation, every section's content, social links,
-   and the list of background images. Everything below this block is
-   layout/logic and can be left alone.
+   There is NO inline content. All content lives in an external JSON file
+   (DATA_URL below). The site loads it on boot; if it can't be loaded or
+   parsed, or contains no usable sections, the visitor sees the error screen
+   instead. JSON is the single source of truth.
 
-   HOW SECTIONS WORK — THE BLOCK ENGINE
-   ------------------------------------
-   `nav` is the list of tabs (each { id, label }). `sections` is keyed by
-   those same ids. Each section is:
-
-       <id>: {
-           title: "Heading shown at the top of the section" (optional),
-           blocks: [ ...an ordered list of content blocks... ],
+   site-spec.json SHAPE
+   --------------------
+   {
+     "brand": "RustCust",
+     "sections": [                 // ORDERED — order IS the nav + page order
+       {
+         "id": "home",             // unique; used in the URL hash
+         "label": "Domov",         // text shown in the nav tab
+         "title": "Optional",      // (optional) heading at top of the section
+         "blocks": [ ... ]         // ordered content blocks
        }
-
-   A section is just an ordered list of blocks. To rearrange a section,
-   reorder its `blocks` — move a slideshow above the cards, drop text
-   between two card grids, whatever. No fixed per-section recipe.
+     ],
+     "socials": [ { "label", "icon", "url" } ],
+     "footer":  { "note": "...", "year": 2026 },   // year optional; JS fills it
+     "backgrounds": [ "assets/background/bg.jpg", ... ]
+   }
 
    BLOCK WIDTH
    -----------
-   Every block sits in one of two width tiers, set automatically by type:
-     - narrow (~46rem): text and hero — kept readable, never full-bleed.
-     - wide   (~56rem): cards, slideshow, map, table — given room to breathe.
-   Override per block with `width: "narrow"` or `width: "wide"` on any block,
-   e.g. force a slideshow narrow to sit tight under a paragraph. See
-   BLOCK_WIDTHS further down.
+   Each block sits in a width tier set automatically by type (see BLOCK_WIDTHS).
+   Override per block with "width": "narrow" | "wide".
 
-   BLOCK TYPES (each block is an object with a `type`):
+   BLOCK TYPES (each block is an object with a "type"):
+     { "type": "hero", "eyebrow", "title", "lead" }
+     { "type": "text", "text": "Paragraph. Inline <em>…</em> and <a …> ok." }
+     { "type": "cards", "linked": false, "items": [ { "title","body","meta","url" } ] }
+     { "type": "links", "items": [ { "label","handle","url","icon" } ] }
+     { "type": "map", "mode": "embed", "embed","url","label","address" }
+     { "type": "slideshow", "name","blurb", "slides": [ { "src","title","caption","text" } ] }
+     { "type": "table", "name","blurb", "headings": [...], "rows": [ [...], ... ] }
 
-     { type: "text", text: "A paragraph. Inline <em>…</em> and <a …> ok." }
-
-     { type: "cards", linked: false, items: [
-         { title, body, meta }                      // plain card
-         { title, body, meta, url }                 // linked card if linked:true
-     ] }
-
-     { type: "links", items: [
-         { label, handle, url }                     // e.g. email / phone rows
-     ] }
-
-     { type: "map", mode: "embed", embed: "<google embed src>",
-       url: "<share link>", label: "Accessible label / location name",
-       address: "Optional street address" }
-       → mode: "embed" (default) shows the live Google Maps iframe + an
-         "Open in Maps" button.
-       → mode: "static" shows a clean themed card (no iframe): the label, an
-         optional address line if you provide one, and the button. Prettier and
-         lighter — good when the live map looks too noisy.
-
-     { type: "slideshow", name: "Optional heading", blurb: "Optional text",
-       slides: [
-           { src, title, caption, text }            // only `src` is required
-       ] }
-       → 1 slide  = a plain framed image
-       → 2+ slides = carousel with prev/next, dots, and an "n / total" counter
-       Carousels autoplay (5s, pause on hover/focus) and any image can be
-       clicked to expand in a full-screen lightbox.
-
-     { type: "table", name: "Optional heading", blurb: "Optional text",
-       headings: ["Service", "Duration", "Price"],   // any number of columns
-       rows: [
-           ["Basic tune-up", "30 min", "€25"],       // cells, in heading order
-           ["Full service",  "2 hr",   "€60"],
-       ] }
-       → A structured table (e.g. a price list). `headings` defines the
-         columns; each row is an array of cells in the same order. Short rows
-         pad with empty cells, extra cells are ignored, so a ragged row never
-         breaks the layout. The last column is right-aligned + accented, which
-         reads well for a price/value column. Cell text allows the same trusted
-         inline HTML (<em>, <a>) as other blocks.
-
-   CONTENT LENGTH GUIDANCE (hero especially)
-   -----------------------------------------
-   The hero is the first thing on the page; keep it tight or it becomes a wall
-   on mobile:
-     - hero title: short and punchy (a line or two).
-     - hero lead: one or two short sentences. It is width-capped for
-       readability and will wrap; long copy looks cramped, not premium.
-     - extra explanation belongs in a separate `text` block below the hero,
-       not stuffed into the lead.
-
-   IMPORTANT: block text (text/blurb/title/etc.) intentionally supports small
-   trusted inline HTML, e.g. <em> and <a>. Keep these values authored by you,
-   never user-supplied raw input, unless you sanitize first.
-
-   Adding a brand-new block type is a small edit to BLOCK_RENDERERS further
-   down — see the comment there.
+   IMPORTANT: block text intentionally supports small trusted inline HTML
+   (<em>, <a>). Author these values yourself; never feed user-supplied raw
+   input into them unless you sanitize first.
 ---------------------------------------------------------------------- */
 
-let SITE = {
-    // OPTIONAL: point this at a JSON endpoint to load content from your own
-    // backend instead of editing this file. Any keys the JSON returns override
-    // the defaults below; anything it omits falls back to what's here.
-    //
-    // For this RustCust version, keep it null if you paste this directly into
-    // script.js. If you later move the content into an external JSON file, set:
-    //
-    // dataUrl: "site.json"
-    //
-    // Important: real JSON cannot contain these comments.
-    dataUrl: null,
+// Path to the content file, relative to the page. Must be served over http
+// (not file://) or the fetch is blocked by CORS.
+const DATA_URL = "site-spec.json";
 
-    brand: "RustCust",
-
-    // The tabs, in order. `id` ties each one to a key in `sections` below.
-    //
-    // Client wanted the homepage split into:
-    // - Servis
-    // - Guiding
-    // - Custom
-    //
-    // Contact stays as its own tab because people should not hunt for phone,
-    // email, Instagram, or address.
-    nav: [
-        {id: "home", label: "Domov"},
-        {id: "servis", label: "Servis"},
-        {id: "guiding", label: "Guiding"},
-        {id: "custom", label: "Custom"},
-        {id: "findme", label: "Kde ma nájdete"},
-        {id: "kontakt", label: "Kontakt"},
-    ],
-
-    // Every section, keyed by the nav id.
-    //
-    // Each section is:
-    //
-    // sectionId: {
-    //     title: "Optional section heading",
-    //     blocks: [
-    //         { type: "text", ... },
-    //         { type: "cards", ... },
-    //         { type: "table", ... },
-    //         { type: "slideshow", ... },
-    //         ...
-    //     ],
-    // }
-    //
-    // To rearrange the page, move blocks up/down. No hardcoded per-tab layout.
-    sections: {
-        home: {
-            // No title here — the hero block carries its own big headline.
-            //
-            // Homepage strategy:
-            // - short intro
-            // - explain RustCust in one sentence
-            // - three cards leading to Servis / Guiding / Custom
-            // - visual proof via slideshow
-            blocks: [
-                {
-                    type: "hero",
-                    width: "wide",
-                    eyebrow: "RustCust — cyklodielňa",
-
-                    // <em>…</em> renders in the accent color.
-                    // Keep this short. Long hero headlines look like ass on mobile.
-                    title: "Servis bicyklov a lyží, custom úpravy a guiding v <em>Rajci</em>.",
-
-                    // One or two short sentences max.
-                    // Extra explanation belongs in a text block below.
-                    lead: "Bla bla bla nejaky text",
-                },
-                {
-                    type: "text",
-                    width: "wide",
-
-                    text: "RustCust je malá cyklodielňa v Rajci. Namiesto anonymného servisu ponúka osobný prístup, praktické riešenia a prácu, ktorú je vidieť na výsledku.",
-                },
-                {
-                    type: "cards",
-                    linked: true,
-
-                    // These are the three homepage pillars the client asked for.
-                    // Each card links to its own tab via hash.
-                    items: [
-                        {
-                            title: "Servis",
-                            body: "Diagnostika, nastavenie, umývanie, opravy bicyklov, ručný servis lyží a snowboardov v zimnom období.",
-                            meta: "Cenník a podmienky",
-                            url: "#servis",
-                        },
-                        {
-                            title: "Guiding",
-                            body: "Lokálne výjazdy, bikeškola a sprevádzanie po trasách v okolí Rajca a Rajeckej doliny.",
-                            meta: "Balíky a rezervácia",
-                            url: "#guiding",
-                        },
-                        {
-                            title: "Custom",
-                            body: "Zákazkové úpravy, prestavby retro bicyklov, custom sedlá a drobnosti na mieru.",
-                            meta: "Projekty a úpravy",
-                            url: "#custom",
-                        },
-                    ],
-                },
-                {
-                    type: "slideshow",
-                    name: "RustCust v skratke",
-
-                    // Replace these placeholders with real RustCust images.
-                    // Good homepage images:
-                    // - workshop / dielňa
-                    // - bike service detail
-                    // - riding / guiding
-                    // - finished custom bike
-                    //
-                    // With your preview/lightbox feature, users can click images
-                    // and open them larger.
-                    slides: [
-                        {
-                            src: "assets/slides/shop.jpg",
-                            title: "Cyklodielňa v Rajci",
-                            caption: "Servis, opravy a úpravy bicyklov.",
-                        },
-                        {
-                            src: "assets/slides/flight.jpg",
-                            title: "Guiding",
-                            caption: "Lokálne trasy a výjazdy v okolí Rajca.",
-                        },
-                        {
-                            src: "assets/slides/peugeot.jpg",
-                            title: "Custom práca",
-                            caption: "Retro bicykle, prestavby a detaily na mieru.",
-                        },
-                    ],
-                },
-            ],
-        },
-
-        servis: {
-            title: "Servis.",
-
-            // Service tab strategy:
-            // - explain what he does
-            // - show service categories
-            // - show actual price table
-            // - show service conditions
-            // - end with contact CTA links
-            // - include service/workshop photos
-            blocks: [
-                {
-                    type: "text",
-
-                    // Important: pricing disclaimer belongs near the top.
-                    // Bike service is not a clean e-shop product because the final
-                    // price depends on bike condition, parts, and hidden problems.
-                    text: "Servis bicyklov, cyklohygiena a v zimnom období aj ručný servis lyží a snowboardov. Každý bicykel je iný, preto sa výsledná cena môže líšiť podľa stavu, rozsahu práce a použitých dielov.",
-                },
-                {
-                    type: "cards",
-
-                    // Quick service category overview before the full cenník.
-                    items: [
-                        {
-                            title: "Bicykle",
-                            body: "Diagnostika, nastavenie bŕzd a radenia, centrovanie, kontrola spojov, premazanie a bežné servisné úkony.",
-                            meta: "Diagnostika / veľký servis",
-                        },
-                        {
-                            title: "Cyklohygiena",
-                            body: "Základné alebo detailné umytie bicykla vrátane čistenia pohonu, sušenia a premazania.",
-                            meta: "Čistý bike jazdí lepšie",
-                        },
-                        {
-                            title: "Lyže a snowboardy",
-                            body: "V zimnom období ručný servis lyží a snowboardov podľa dohody.",
-                            meta: "Zimný servis",
-                        },
-                    ],
-                },
-                {
-                    type: "table",
-                    name: "Cenník servisu bicyklov",
-
-                    // Keep the warning. It prevents customers from treating
-                    // complex service work like a fixed checkout price.
-                    blurb: "Ceny sú orientačné a môžu sa líšiť podľa stavu bicykla a náročnosti práce. Materiál nie je zahrnutý v cene služby.",
-
-                    // Last column is styled as value/price by your table CSS.
-                    headings: ["Úkon", "Popis", "Cena"],
-                    rows: [
-                        [
-                            "Diagnostika a kontrola bicykla",
-                            "Základná kontrola stavu bicykla.",
-                            "12 €",
-                        ],
-                        [
-                            "Malý servis",
-                            "Diagnostika, nastavenie bŕzd a prehadzovačiek, kontrola a premazanie spojov, dotiahnutie skrutiek momentovým kľúčom, čistenie a premazanie reťaze, dofúkanie kolies.",
-                            "30 €",
-                        ],
-                        [
-                            "Stredný servis",
-                            "Malý servis + centrovanie kolies, kontrola a nastavenie nábojov.",
-                            "45 €",
-                        ],
-                        [
-                            "Veľký servis",
-                            "Stredný servis + umývanie bicykla, dôkladné vyčistenie pohonu ultrazvukom, premazanie a nastavenie pohonu, čistenie a odmastenie bŕzd, kontrola a premazanie ložísk v hlavovom a stredovom zložení, výmena bowdenov a laniek.",
-                            "95 €",
-                        ],
-                        [
-                            "Základné umytie",
-                            "Celkové umytie bicykla, sušenie, premazanie reťaze.",
-                            "15 €",
-                        ],
-                        [
-                            "Detailné umytie",
-                            "Základné umytie + čistenie pohonu v ultrazvuku, následné premazanie a čistenie citlivých súčiastok parou.",
-                            "25 €",
-                        ],
-                        [
-                            "Mimo-cenníkové úkony",
-                            "Práca mimo základného cenníka podľa dohody.",
-                            "35 €/hod",
-                        ],
-                    ],
-                },
-                {
-                    type: "table",
-                    name: "Podmienky servisu",
-
-                    // This is better as a table than as a wall of paragraphs.
-                    // User sees the rule and the explanation quickly.
-                    headings: ["Podmienka", "Detail"],
-                    rows: [
-                        [
-                            "Odhad ceny",
-                            "Odhadovaná cena servisu sa môže líšiť od reálnej ceny. Každý bicykel je jedinečný.",
-                        ],
-                        [
-                            "Schválenie práce",
-                            "Akýkoľvek zákrok sa vykonáva až po odsúhlasení zákazníkom.",
-                        ],
-                        [
-                            "Retro a vintage bicykle",
-                            "Servis starších bicyklov môže byť časovo a technicky náročnejší.",
-                        ],
-                        [
-                            "Doplnky",
-                            "Doplnky, ktoré by sa mohli poškodiť pri manipulácii, je potrebné vopred demontovať.",
-                        ],
-                        [
-                            "Nadmerne špinavý bicykel",
-                            "Pri nadmerne špinavom bicykli môže byť účtovaný poplatok za čistenie 15 €.",
-                        ],
-                        [
-                            "Skladovanie",
-                            "Ak si zákazník nevyzdvihne bicykel do troch pracovných dní od dohodnutého termínu, môže byť účtované skladovanie 2 €/deň.",
-                        ],
-                    ],
-                },
-                {
-                    type: "slideshow",
-                    name: "Servis a dielňa",
-
-                    slides: [
-                        {
-                            src: "assets/slides/mr_fix.jpg",
-                            title: "Servis bicyklov",
-                            caption: "Diagnostika, nastavenie a opravy.",
-                        },
-                        {
-                            src: "assets/slides/mr_fix_2.jpg",
-                            title: "Servis bicyklov",
-                            caption: "Diagnostika, nastavenie a opravy.",
-                        },
-                        {
-                            src: "assets/slides/mr_clean.jpg",
-                            title: "Cyklohygiena",
-                            caption: "Čistenie a starostlivosť o pohon.",
-                        },
-                    ],
-                },
-            ],
-        },
-
-        guiding: {
-            title: "Guiding.",
-
-            // Guiding tab strategy:
-            // - do NOT build a real e-shop
-            // - present guiding as packages / booking options
-            // - prices can stay "dohodou" until he confirms them
-            // - CTA should be reservation/contact, not checkout
-            blocks: [
-                {
-                    type: "text",
-                    text: "Guiding je pre ľudí, ktorí chcú spoznať lokálne trasy, jazdiť istejšie alebo si dať výjazd bez toho, aby museli riešiť plánovanie. Vhodné pre jednotlivcov, dvojice aj malé skupiny.",
-                },
-                {
-                    type: "cards",
-
-                    // These are “eshop-ish” visually, but without cart/payment.
-                    // That is the right compromise for a small local guiding offer.
-                    items: [
-                        {
-                            title: "Lokálny výjazd",
-                            body: "Krátky výjazd v okolí Rajca podľa kondície a skúseností jazdcov.",
-                            meta: "Jednoduchý štart",
-                        },
-                        {
-                            title: "Individuálny guiding",
-                            body: "Trasa, tempo a náročnosť podľa dohody. Vhodné pre ľudí, ktorí chcú jazdiť konkrétny typ terénu.",
-                            meta: "Na mieru",
-                        },
-                        {
-                            title: "Bikeškola",
-                            body: "Základy techniky jazdy, istota na bicykli, práca s telom a bicyklom v teréne.",
-                            meta: "Technika a istota",
-                        },
-                    ],
-                },
-                {
-                    type: "table",
-                    name: "Guiding balíky",
-
-                    // These are placeholders. Do not ship fake prices.
-                    // Ask RustCust to confirm exact duration, price, and maximum group size.
-                    blurb: "Tieto ceny sú zatiaľ návrh štruktúry",
-
-                    headings: ["Balík", "Popis", "Cena"],
-                    rows: [
-                        [
-                            "Krátky výjazd",
-                            "2–3 hodiny, lokálna trasa v okolí Rajca.",
-                            "dohodou",
-                        ],
-                        [
-                            "Poldenný guiding",
-                            "Dlhší výjazd s plánovanou trasou a prestávkami.",
-                            "dohodou",
-                        ],
-                        [
-                            "Individuálny guiding",
-                            "Trasa, tempo a náročnosť podľa dohody.",
-                            "dohodou",
-                        ],
-                        [
-                            "Bikeškola",
-                            "Základy techniky jazdy alebo individuálna práca na konkrétnych zručnostiach.",
-                            "dohodou",
-                        ],
-                    ],
-                },
-                {
-                    type: "slideshow",
-                    name: "Výjazdy a trasy",
-
-                    // Use real guiding photos here.
-                    // Strong options:
-                    // - riding in forest
-                    // - group ride
-                    // - trail / viewpoint
-                    // - technique lesson
-
-                    slides: [
-                        {
-                            src: "assets/slides/ride.jpg",
-                            title: "Lokálne trasy",
-                            caption: "Výjazdy v okolí Rajca.",
-                        },
-                        {
-                            src: "assets/slides/ride_2.jpg",
-                            title: "Bikeškola",
-                            caption: "Technika jazdy a istota na bicykli.",
-                        },
-                        {
-                            src: "assets/slides/ride_3.jpg",
-                            title: "Na mieru",
-                            caption: "Tempo a náročnosť podľa skupiny.",
-                        },
-                    ],
-                },
-            ],
-        },
-
-        custom: {
-            title: "Custom.",
-
-            // Custom tab strategy:
-            // - make it visual
-            // - show project types
-            // - avoid rigid prices
-            // - use slideshow/lightbox heavily
-            blocks: [
-                {
-                    type: "text",
-                    text: "Custom časť je o úpravách, opravách a prestavbách bicyklov, najmä retro a vintage kúskov. Cieľom nie je len funkčnosť, ale aj charakter, detail a výsledok, ktorý dáva bicyklu nový život.",
-                },
-                {
-                    type: "cards",
-                    items: [
-                        {
-                            title: "Retro prestavby",
-                            body: "Úpravy starších bicyklov na praktické mestské alebo štýlové jazdenie.",
-                            meta: "Nový život pre starý bike",
-                        },
-                        {
-                            title: "Custom detaily",
-                            body: "Sedlá, poťahy, drobnosti na mieru a úpravy podľa predstavy zákazníka.",
-                            meta: "Detail robí celok",
-                        },
-                        {
-                            title: "Individuálne projekty",
-                            body: "Každý custom projekt sa rieši individuálne podľa bicykla, rozpočtu a cieľa.",
-                            meta: "Cena dohodou",
-                        },
-                    ],
-                },
-                {
-                    type: "table",
-                    name: "Custom práce",
-
-                    // For custom work, hard fixed prices can backfire.
-                    // This keeps the site transparent without promising nonsense.
-                    blurb: "Pri custom práci je lepšie uvádzať orientačné kategórie, nie tvrdý e-shop cenník. Finálna cena závisí od bicykla, dielov a rozsahu zásahu.",
-
-                    headings: ["Typ práce", "Popis", "Cena"],
-                    rows: [
-                        [
-                            "Konzultácia projektu",
-                            "Zhodnotenie bicykla, predstavy, možností a odhad rozsahu práce.",
-                            "dohodou",
-                        ],
-                        [
-                            "Retro prestavba",
-                            "Úprava staršieho bicykla na nový účel alebo štýl.",
-                            "dohodou",
-                        ],
-                        [
-                            "Custom sedlo / detail",
-                            "Poťah, doplnok alebo drobná úprava na mieru.",
-                            "dohodou",
-                        ],
-                        [
-                            "Individuálny projekt",
-                            "Komplexnejšia zákazková práca podľa dohody.",
-                            "dohodou",
-                        ],
-                    ],
-                },
-                {
-                    type: "slideshow",
-                    name: "Hotové custom projekty",
-
-                    // This should be the money block.
-                    // Put best photos here:
-                    // - before/after
-                    // - full bike side profile
-                    // - detail shots
-                    // - saddle / leather / paint / cockpit details
-                    slides: [
-                        {
-                            src: "assets/slides/custom.jpeg",
-                            title: "BMX",
-                            caption: "Prestavba a úprava na mieru.",
-                        },
-                        {
-                            src: "assets/slides/custom_2.jpeg",
-                            title: "Detail práce",
-                            caption: "Custom lakovanie",
-                        },
-                        {
-                            src: "assets/slides/custom_3.jpeg",
-                            title: "Detail práce",
-                            caption: "Sedlo",
-                        },
-                        {
-                            src: "assets/slides/custom_4.jpeg",
-                            title: "Hotový projekt",
-                            caption: "Bicykel pripravený späť do života.",
-                        },
-                    ],
-                },
-            ],
-        },
-
-        findme: {
-            title: "Kde ma nájdeš.",
-            blocks: [
-                {
-                    type: "text",
-                    text: "Cyklodielňu RustCust nájdeš na adrese M. R. Štefánika 624/10, Rajec.",
-                },
-                {
-                    type: "map",
-
-                    // Location only. Do not reuse this address in Firemné údaje unless
-                    // it is also the official registered business address.
-                    mode: "embed",
-
-                    // Google Maps embed for the physical workshop/location.
-                    embed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2612.8265648432184!2d18.631298776804456!3d49.08993598438358!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4714f55524f56759%3A0xcec166df13056af7!2sCyklodie%C5%88a%20RustCust!5e0!3m2!1ssk!2sus!4v1780425535664!5m2!1ssk!2sus",
-                    // Normal map link used by the "Open in Maps" button.
-                    url: "https://maps.app.goo.gl/sC1H3aNMKeq9ZPvG6",
-
-                    label: "Mapa s polohou cyklodielne RustCust",
-                    address: "M. R. Štefánika 624/10, Rajec",
-                },
-                {
-                    type: "slideshow",
-                    name: "Cyklodielňa",
-                    slides: [
-                        {
-                            src: "assets/slides/workshop_outside.png",
-                            title: "Cyklodielňa RustCust",
-                            caption: "M. R. Štefánika 624/10",
-                            text: "Rajec",
-                        },
-                    ],
-                },
-            ],
-        },
-
-        kontakt: {
-            title: "Kontakt.",
-
-            // Contact tab strategy:
-            // - no backend form
-            // - no spam magnet
-            // - use phone and email
-            // - location lives in "Kde ma nájdete"
-            // - business table should contain only confirmed official business data
-            blocks: [
-                {
-                    type: "text",
-                    text: "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme.",
-                },
-                {
-                    type: "links",
-                    items: [
-                        {
-                            label: "Telefón",
-                            handle: "+421 000 000 00",
-                            url: "tel:+42100000000",
-                            icon: "phone",
-                        },
-                        {
-                            label: "Email",
-                            handle: "r@r.sk",
-                            url: "mailto:r@r.sk",
-                            icon: "email",
-                        },
-                        {
-                            label: "Instagram",
-                            handle: "@rustcust",
-                            url: "https://www.instagram.com/rustcust/",
-                            icon: "instagram",
-                        },
-                    ],
-                },
-                {
-                    type: "table",
-                    name: "Firemné údaje",
-
-                    // Do not put the workshop/location address here unless it is also
-                    // the official registered business address.
-                    headings: ["Údaj", "Hodnota"],
-                    rows: [
-                        [
-                            "Prevádzka",
-                            "RustCust – cyklodielňa",
-                        ],
-                        [
-                            "Meno",
-                            "Rastislav Buchta",
-                        ],
-                        [
-                            "IČO",
-                            "0",
-                        ],
-                        [
-                            "DIČ",
-                            "0",
-                        ],
-                    ],
-                },
-            ],
-        },
-    },
-
-    footer: {
-        note: "Created and maintained by <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Michal</a>.",
-        year: new Date().getFullYear(),
-    },
-
-    // Social links shown next to the brand in the header and inside the mobile
-    // drawer. Keep this short. Too many social links will fight the desktop nav.
-    //
-    // `icon` must match a key in SOCIAL_ICONS. Current template supports
-    // instagram/youtube unless you add more icons manually.
-    socials: [
-        {
-            label: "RustCust",
-            icon: "instagram",
-            url: "https://www.instagram.com/rustcust/",
-        },
-    ],
-
-    // Background images.
-    //
-    // Replace with real RustCust background photos. Best options:
-    // - workshop atmosphere
-    // - bike detail
-    // - forest/trail/guiding shot
-    //
-    // Keep them compressed. Huge photos will make the site feel slow.
-    backgrounds: [
-        "assets/background/background.jpg",
-        "assets/background/background_2.jpg",
-        "assets/background/background_3.jpg",
-        "assets/background/background_4.jpg",
-        "assets/background/background_5.jpg",
-    ],
-};
+// Populated from the fetched JSON on boot. Empty until then; if the load fails
+// it stays empty and the error screen is shown.
+let SITE = {};
 
 /* ----------------------------------------------------------------------
    2. SMALL HELPERS
@@ -747,6 +79,21 @@ const el = (tag, attrs = {}, html = "") => {
 };
 
 const isExternalUrl = (url = "") => /^https?:\/\//i.test(url);
+
+/* The ordered list of sections, normalized + guarded. Every render path and
+   the tab logic go through this, so a missing/empty `sections` array degrades
+   to an empty site instead of throwing. Entries without an `id` are dropped
+   (an id is required to anchor the tab + URL hash). */
+function getSections() {
+    const list = Array.isArray(SITE.sections) ? SITE.sections : [];
+    return list.filter((s) => s && s.id);
+}
+
+/* Derive the nav (tabs) from the sections array — the array IS the nav.
+   Falls back to the id when a section has no explicit label. */
+function navItems() {
+    return getSections().map((s) => ({id: s.id, label: s.label || s.id}));
+}
 
 /* Escape text destined for an attribute (e.g. alt=""). Slide captions/titles
    come from the trusted SITE object, but image alt text is built from them and
@@ -902,10 +249,7 @@ function buildLinks(block) {
 /* map — location block with two modes:
    - "embed" (default): the live Google Maps iframe + an "Open in Maps" button.
    - "static": a clean themed card with no iframe — the location name, an
-     optional address line (only if `address` is set), and the button. Lighter
-     and prettier when the live map looks too noisy.
-   Falls back to embed if mode is "static" but no embed/url is usable, and to
-   nothing only if there's neither an embed nor a url to point at. */
+     optional address line (only if `address` is set), and the button. */
 function buildMap(block) {
     const mode = block.mode === "static" ? "static" : "embed";
     const href = block.url || block.embed;
@@ -959,14 +303,9 @@ function buildMap(block) {
 
 /* table — a structured table (e.g. a price list).
    Block shape: { name?, blurb?, headings: [...], rows: [[...], ...] }
-   - `headings` defines the columns (any number).
-   - each entry in `rows` is an array of cells, in heading order.
    Short rows are padded with empty cells and extra cells are ignored, so a
-   ragged row never breaks the grid. The optional name/blurb mirror the
-   slideshow block, so several named tables can stack cleanly in one section.
-   Cell text allows the same trusted inline HTML (<em>, <a>) as other blocks —
-   keep it authored by you, not user input. The last column is right-aligned
-   and accent-colored, which reads naturally as a price/value column. */
+   ragged row never breaks the grid. The last column is right-aligned and
+   accent-colored, which reads naturally as a price/value column. */
 function buildTable(block) {
     const headings = block.headings || [];
     const rows = block.rows || [];
@@ -976,8 +315,6 @@ function buildTable(block) {
     const blurb = block.blurb;
     const lastCol = headings.length - 1;
 
-    // Wrapper so the optional name + blurb + table stay one unit, matching the
-    // slideshow block's structure.
     const wrapper = el("div", {class: "table-block"});
 
     if (name) {
@@ -1003,8 +340,7 @@ function buildTable(block) {
     thead.appendChild(headRow);
     table.appendChild(thead);
 
-    // Body. One <tr> per row; cells are read positionally against headings, so
-    // a short row pads with blanks and a long row is truncated to the columns.
+    // Body. One <tr> per row; cells are read positionally against headings.
     const tbody = el("tbody");
     rows.forEach((row) => {
         const cells = Array.isArray(row) ? row : [row];
@@ -1030,30 +366,12 @@ function buildTable(block) {
    buildCarousel(block) returns a self-contained carousel node for a slideshow
    block: { name?, blurb?, slides: [ {src, title, caption, text}, ... ] }
    (only `src` is required per slide).
-
-   Behavior:
-   - 1 slide  → a single framed image + its caption block, no controls.
-   - 2+ slides → manual carousel: prev/next buttons, a dot per slide, and an
-     "n / total" counter. Real <button>s, ARIA, and keyboard arrow support.
-   - Autoplay: advances every 5s, pauses on hover and keyboard focus, and is
-     disabled entirely under prefers-reduced-motion. Any manual interaction
-     restarts the timer so the landed-on slide gets its full dwell.
-   - Expand: every image is wrapped in a button; clicking it opens a shared
-     full-screen lightbox showing the full image letterboxed (no cropping).
-
-   Each carousel keeps its own `index` and timer in closure scope, so multiple
-   carousels on the page never interfere with one another.
 ---------------------------------------------------------------------- */
 
 let carouselSeq = 0;
 
 /* Shared lightbox: one overlay reused by every carousel, created lazily on
-   first open. Shows the full image letterboxed (object-fit: contain in CSS) —
-   each image keeps its own aspect ratio inside a uniform frame, no cropping.
-
-   open(slides, startIndex) takes the clicked carousel's full slide list and the
-   index that was clicked, so prev/next (buttons + arrow keys) cycle within that
-   one carousel. Each slide is { src, caption } (caption already joined). */
+   first open. Shows the full image letterboxed (object-fit: contain in CSS). */
 let lightboxApi = null;
 
 function getLightbox() {
@@ -1124,9 +442,6 @@ function getLightbox() {
         isOpen = false;
         overlay.classList.remove("is-open");
         document.body.classList.remove("lightbox-open");
-        // Fade out, then hide + clear the src. Guarded by isOpen so a fast
-        // reopen during the fade cancels this hide (the reopen clears the timer
-        // too, below).
         if (hideTimer) clearTimeout(hideTimer);
         hideTimer = setTimeout(() => {
             if (!isOpen) {
@@ -1139,8 +454,6 @@ function getLightbox() {
     };
 
     const open = (slideList, startIndex) => {
-        // Cancel any pending hide from a just-closed instance so reopening
-        // immediately works (this was the "can't open it again" bug).
         if (hideTimer) {
             clearTimeout(hideTimer);
             hideTimer = null;
@@ -1154,7 +467,6 @@ function getLightbox() {
         render();
         overlay.hidden = false;
         document.body.classList.add("lightbox-open");
-        // Next frame so the fade-in transition runs from hidden → visible.
         requestAnimationFrame(() => overlay.classList.add("is-open"));
         closeBtn.focus();
     };
@@ -1195,11 +507,8 @@ function buildCarousel(block) {
     const multi = list.length > 1;
     const uid = `carousel-${++carouselSeq}`;
 
-    // An optional name lets several carousels sit in one section, each labelled
-    // (e.g. "Mountains", then "Cars"). It also becomes the accessible label.
     const baseLabel = multi ? `Image carousel, ${list.length} slides` : "Image";
 
-    // Wrapper so the optional name heading + blurb + carousel stay one unit.
     const wrapper = el("div", {class: "carousel-block"});
 
     if (name) {
@@ -1217,11 +526,8 @@ function buildCarousel(block) {
         "aria-labelledby": name ? `${uid}-name` : null,
     });
 
-    // Viewport holds the stacked slides; only the active one is shown (CSS).
     const viewport = el("div", {class: "carousel__viewport"});
 
-    // Slide data for the lightbox (this carousel only): src + a joined caption.
-    // Prev/next in the expanded view cycles through exactly these.
     const lightboxSlides = list.map((s, i) => ({
         src: s.src,
         caption:
@@ -1241,7 +547,6 @@ function buildCarousel(block) {
 
         const altText = s.title || s.caption || `Slide ${i + 1}`;
 
-        // Counter chip ("n / total"), top-left, multi only — mirrors W3Schools.
         if (multi) {
             slide.appendChild(
                 el("span", {class: "carousel__counter", "aria-hidden": "true"},
@@ -1249,8 +554,6 @@ function buildCarousel(block) {
             );
         }
 
-        // The image lives inside a real <button> so it's keyboard-focusable and
-        // opens the lightbox on click/Enter/Space.
         const trigger = el("button", {
             type: "button",
             class: "carousel__expand",
@@ -1265,9 +568,6 @@ function buildCarousel(block) {
             decoding: "async",
         });
 
-        // If an image path is wrong, hide that slide's broken-image icon and
-        // fall back to a neutral frame — consistent with the background's
-        // silent-fail behavior elsewhere in the template.
         img.addEventListener("error", () => {
             img.classList.add("is-broken");
         });
@@ -1276,7 +576,6 @@ function buildCarousel(block) {
         trigger.addEventListener("click", () => getLightbox().open(lightboxSlides, i));
         slide.appendChild(trigger);
 
-        // Caption block: title + caption + smaller text, any subset present.
         if (s.title || s.caption || s.text) {
             const cap = el("figcaption", {class: "carousel__caption"});
             if (s.title) cap.appendChild(el("span", {class: "carousel__title"}, s.title));
@@ -1291,7 +590,6 @@ function buildCarousel(block) {
 
     root.appendChild(viewport);
 
-    // Single slide: nothing more to wire up (image is still click-to-expand).
     if (!multi) {
         wrapper.appendChild(root);
         return wrapper;
@@ -1318,8 +616,6 @@ function buildCarousel(block) {
         });
     };
 
-    // ---- Autoplay: advance every 5s; pause on hover/focus; disabled under
-    // prefers-reduced-motion. Manual nav restarts the timer (full dwell). ----
     const AUTOPLAY_MS = 5000;
     const prefersReducedMotion = window.matchMedia
         && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1338,7 +634,6 @@ function buildCarousel(block) {
         timer = setInterval(() => setActive(index + 1), AUTOPLAY_MS);
     };
 
-    // Pause on pointer hover and keyboard focus anywhere in the carousel.
     root.addEventListener("mouseenter", stop);
     root.addEventListener("mouseleave", start);
     root.addEventListener("focusin", stop);
@@ -1356,8 +651,6 @@ function buildCarousel(block) {
         "aria-label": "Next slide",
     }, "&#10095;"); // ❯
 
-    // Wrap a slide change so a manual action also resets the autoplay timer,
-    // giving the slide the user landed on its full interval before advancing.
     const manual = (fn) => () => {
         fn();
         stop();
@@ -1370,7 +663,6 @@ function buildCarousel(block) {
     root.appendChild(prevBtn);
     root.appendChild(nextBtn);
 
-    // Dots — a real tablist so keyboard arrows move between slides.
     const dotWrap = el("div", {
         class: "carousel__dots",
         role: "tablist",
@@ -1392,7 +684,6 @@ function buildCarousel(block) {
         return dot;
     });
 
-    // Left/right arrows on the dot tablist cycle slides + move focus.
     dotWrap.addEventListener("keydown", (e) => {
         let next = null;
         if (e.key === "ArrowRight" || e.key === "ArrowDown") next = index + 1;
@@ -1419,11 +710,6 @@ function buildCarousel(block) {
 
 /* ----------------------------------------------------------------------
    2D. BLOCK DISPATCH
-
-   Map a block `type` → its builder. To add a NEW block type:
-     1. write a buildX(block) that returns a DOM node (or null/fragment), and
-     2. add a `yourtype: buildX` line here.
-   Then use { type: "yourtype", ... } in any section's `blocks` array.
 ---------------------------------------------------------------------- */
 
 const BLOCK_RENDERERS = {
@@ -1436,13 +722,6 @@ const BLOCK_RENDERERS = {
     table: buildTable,
 };
 
-/* Default width tier per block type. Everything defaults to "wide" so blocks
-   share one consistent left edge / column width across the whole site (hero,
-   text, cards, slideshow, map, table, contact links all line up). Any block can
-   still opt into the narrower readable column with `width: "narrow"` — useful
-   for a long-form paragraph you want kept to a comfortable reading measure. The
-   actual rem widths live in styles.css as --content-narrow / --content-wide,
-   applied via the .block--narrow / .block--wide wrapper classes. */
 const BLOCK_WIDTHS = {
     hero: "wide",
     text: "wide",
@@ -1459,9 +738,6 @@ function widthFor(block) {
     return BLOCK_WIDTHS[block && block.type] || "wide";
 }
 
-/* Render one block to a node, or null if the type is unknown / it produced
-   nothing. Unknown types are skipped with a console warning rather than
-   throwing, so a typo never blanks the whole page. */
 function renderBlock(block) {
     if (!block || !block.type) return null;
 
@@ -1476,6 +752,9 @@ function renderBlock(block) {
 
 /* ----------------------------------------------------------------------
    3. RENDER NAVIGATION
+
+   Tabs are derived from the sections array (navItems()), so there is no
+   separate nav list to keep in sync.
 ---------------------------------------------------------------------- */
 
 function renderNav() {
@@ -1488,10 +767,7 @@ function renderNav() {
     brand.textContent = SITE.brand;
 
     // Wrap the skull mascot, brand, and optional socials into one left-side
-    // header cluster. The skull starts in index.html before #brand; renderNav()
-    // moves it into .brand-wrap so header-fit treats skull + brand + socials as
-    // one unit. Build the wrapper even when there are no socials, otherwise the
-    // skull would stay outside the measured header cluster.
+    // header cluster so header-fit measures skull + brand + socials as a unit.
     const brandWrap = el("div", {class: "brand-wrap"});
     brand.replaceWith(brandWrap);
 
@@ -1509,7 +785,7 @@ function renderNav() {
     desktop.setAttribute("role", "tablist");
     desktop.setAttribute("aria-label", "Main sections");
 
-    SITE.nav.forEach((item) => {
+    navItems().forEach((item) => {
         // Desktop nav is the real ARIA tablist. These IDs are unique.
         desktop.appendChild(
             el(
@@ -1540,8 +816,7 @@ function renderNav() {
         );
     });
 
-    // A copy of the social links at the bottom of the mobile drawer, so they're
-    // reachable when the header collapses to the hamburger on narrow screens.
+    // A copy of the social links at the bottom of the mobile drawer.
     if (SITE.socials && SITE.socials.length) {
         mobile.appendChild(buildSocials(SITE.socials));
     }
@@ -1550,39 +825,31 @@ function renderNav() {
 /* ----------------------------------------------------------------------
    4. RENDER CONTENT SECTIONS
 
-   Each nav entry maps to a section in SITE.sections. A section is rendered as
-   its optional title followed by its blocks, in order — there is no
-   per-section special-casing. Reorder a section by reordering its `blocks`.
-
-   Each block is wrapped in a .block element that carries the width tier
-   (.block--narrow / .block--wide). The wrapper centers itself and caps its
-   width; the spacing between consecutive blocks is one uniform rule in CSS
-   (.block + .block), so adding a new block type needs no new spacing CSS.
+   Each section in the array is rendered as its optional title followed by its
+   blocks, in order. Reorder a section by reordering its `blocks`; reorder the
+   site by reordering the `sections` array.
 ---------------------------------------------------------------------- */
 
-function buildSection(id, section) {
+function buildSection(section) {
     const node = el("section", {
-        id,
+        id: section.id,
         class: "section",
         role: "tabpanel",
-        "aria-labelledby": `tab-${id}`,
+        "aria-labelledby": `tab-${section.id}`,
         tabindex: "-1",
     });
 
     // Optional section heading. The hero block carries its own headline, so a
     // section that leads with hero usually omits `title`.
-    if (section && section.title) {
+    if (section.title) {
         node.appendChild(el("h2", {class: "section__title"}, section.title));
     }
 
-    const blocks = (section && section.blocks) || [];
+    const blocks = section.blocks || [];
     blocks.forEach((block) => {
         const rendered = renderBlock(block);
         if (!rendered) return;
 
-        // Wrap every block in a width-tier container. This is what gives the
-        // per-block width rules and the uniform vertical rhythm; the builders
-        // themselves stay width-agnostic.
         const wrap = el("div", {class: `block block--${widthFor(block)}`});
         wrap.appendChild(rendered);
         node.appendChild(wrap);
@@ -1597,11 +864,9 @@ function renderContent() {
 
     main.innerHTML = "";
 
-    // One section per nav entry, in nav order. Missing section data just
-    // renders an empty panel rather than crashing.
-    SITE.nav.forEach((item) => {
-        const section = SITE.sections ? SITE.sections[item.id] : null;
-        main.appendChild(buildSection(item.id, section));
+    // One panel per section, in array order.
+    getSections().forEach((section) => {
+        main.appendChild(buildSection(section));
     });
 }
 
@@ -1609,18 +874,19 @@ function renderFooter() {
     const f = $("#siteFooter");
     if (!f) return;
 
+    // JSON can't compute a value, so the year is filled in here at render time.
+    const year = (SITE.footer && SITE.footer.year) || new Date().getFullYear();
+    const note = (SITE.footer && SITE.footer.note) || "";
+
     f.innerHTML = "";
     f.append(
-        el("span", {}, `© ${SITE.footer.year} ${SITE.brand}`),
-        el("span", {}, SITE.footer.note)
+        el("span", {}, `© ${year} ${SITE.brand || ""}`.trim()),
+        el("span", {}, note)
     );
 }
 
 /* ----------------------------------------------------------------------
    5A. INPUT MODE
-
-   Mobile Firefox can keep tapped links/buttons in a fake focused/hovered
-   state. We only show focus rings after real keyboard navigation.
 ---------------------------------------------------------------------- */
 
 function initInputMode() {
@@ -1674,8 +940,6 @@ function applyTheme(theme) {
 
     const meta = $('meta[name="theme-color"]');
     if (meta) {
-        // Pull the browser-chrome color straight from the active theme's tokens,
-        // so there's nothing to keep in sync if you re-theme styles.css.
         const bg = getComputedStyle(document.body).getPropertyValue("--bg-base").trim();
         if (bg) meta.setAttribute("content", bg);
     }
@@ -1782,22 +1046,20 @@ function initMobileMenu() {
    7. TABS
 
    Each section is a tab panel; only one is shown at a time. The URL hash
-   drives the active tab, so direct links and browser navigation work.
+   drives the active tab, so direct links and browser navigation work. The
+   tab/panel id list comes from the sections array.
 ---------------------------------------------------------------------- */
 
 function initTabs() {
-    // Content is rendered by JS after load, so the browser's automatic scroll
-    // restoration runs before the content exists and anchors to a nearby element
-    // — on mobile this looks like a "pre-scroll" to a random item on refresh.
-    // We own scroll position ourselves, so opt out of the browser's restoration.
     if ("scrollRestoration" in history) {
         history.scrollRestoration = "manual";
     }
 
+    const nav = navItems();
     const links = Array.from(document.querySelectorAll("[data-nav]"));
     const desktopTabs = Array.from(document.querySelectorAll("#navDesktop [role='tab']"));
-    const panels = SITE.nav.map((n) => document.getElementById(n.id)).filter(Boolean);
-    const ids = SITE.nav.map((n) => n.id);
+    const panels = nav.map((n) => document.getElementById(n.id)).filter(Boolean);
+    const ids = nav.map((n) => n.id);
     const defaultId = ids[0];
 
     const normalize = (id) => (ids.includes(id) ? id : defaultId);
@@ -1834,17 +1096,10 @@ function initTabs() {
         }
 
         if (scrollTop) {
-            // Avoid scrollIntoView(): on iOS Safari it can align to a child and
-            // skip past the title. A plain top scroll is more predictable.
             const toTop = () => window.scrollTo(0, 0);
             toTop();
             requestAnimationFrame(toTop);
 
-            // On initial load, iOS Safari restores its old scroll position on a
-            // later tick — after our render and even after scrollRestoration is
-            // set to "manual", which iOS only partially honors. Re-assert the top
-            // across a few frames and once more after load so its restoration and
-            // any late layout shift (map iframe, background image) can't win.
             if (forceTop) {
                 requestAnimationFrame(() => requestAnimationFrame(toTop));
                 setTimeout(toTop, 0);
@@ -1865,8 +1120,6 @@ function initTabs() {
             e.preventDefault();
             show(link.getAttribute("data-nav"));
 
-            // Drop focus after a tap so no focus ring lingers on mobile.
-            // Keyboard users are unaffected.
             if (e.detail !== 0) link.blur();
         });
     });
@@ -1904,7 +1157,6 @@ function initTabs() {
         });
     }
 
-    // React to manual hash edits and browser back/forward.
     window.addEventListener("hashchange", () => {
         show(location.hash.slice(1) || defaultId, {push: false});
     });
@@ -1913,20 +1165,11 @@ function initTabs() {
         show(location.hash.slice(1) || defaultId, {push: false});
     });
 
-    // Initial tab from hash, or default. Force the top on first paint and hold
-    // it across later frames so iOS Safari's scroll restoration can't drag the
-    // page down to a nearby item on refresh.
     show(location.hash.slice(1) || defaultId, {push: false, forceTop: true});
 }
 
 /* ----------------------------------------------------------------------
    8B. HEADER FIT
-
-   CSS can't detect when two flex items are about to touch, so we measure it.
-   If the desktop nav + brand/socials + toggles don't fit the header on one
-   row, add .force-mobile-nav (which hides the nav and the header socials and
-   shows the hamburger). Re-checked on resize. Simple and reversible: when the
-   window grows back, the class comes off and the desktop layout returns.
 ---------------------------------------------------------------------- */
 
 function initHeaderFit() {
@@ -1936,21 +1179,13 @@ function initHeaderFit() {
 
     if (!header || !brandWrap || !nav) return;
 
-    // Switch to mobile once the gap between the rightmost social and the first
-    // tab shrinks below this many pixels. Bump it up for more breathing room.
     const BUFFER = 24;
 
     const apply = () => {
-        // Measure with the desktop layout shown, so the nav and socials are in
-        // their real positions. (force-mobile-nav hides them, so drop it first.)
         header.classList.remove("force-mobile-nav");
 
-        // Below the CSS breakpoint the media query already owns mobile mode.
         if (window.innerWidth <= 640) return;
 
-        // The rightmost thing in the left cluster and the first tab.
-        // Prefer the last social link, but fall back to the brand/skull cluster
-        // when there are no socials, so header-fit still works.
         const socials = brandWrap.querySelectorAll(".socials__link");
         const leftEdgeEl = socials.length
             ? socials[socials.length - 1]
@@ -1962,13 +1197,11 @@ function initHeaderFit() {
         const leftRight = leftEdgeEl.getBoundingClientRect().right;
         const tabLeft = firstTab.getBoundingClientRect().left;
 
-        // gap = horizontal space between the left cluster and the nav.
         const gap = tabLeft - leftRight;
 
         if (gap < BUFFER) {
             header.classList.add("force-mobile-nav");
         } else {
-            // Back to desktop layout: close any drawer left open in mobile mode.
             const mobileNav = $("#navMobile");
             if (mobileNav && mobileNav.classList.contains("is-open")) {
                 const menuToggle = $("#menuToggle");
@@ -1991,7 +1224,6 @@ function initHeaderFit() {
     apply();
     window.addEventListener("resize", apply);
 
-    // Re-measure once web fonts load, since text widths shift when they swap in.
     if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(apply).catch(() => {
         });
@@ -2000,9 +1232,6 @@ function initHeaderFit() {
 
 /* ----------------------------------------------------------------------
    8. BACKGROUND
-
-   Picks one image at random, preloads it, then fades it in. Falls back
-   gracefully if no image is present.
 ---------------------------------------------------------------------- */
 
 function initBackground() {
@@ -2010,7 +1239,6 @@ function initBackground() {
     const list = SITE.backgrounds;
 
     if (layers.length < 2 || !list || !list.length) {
-        // Fallback: single image, no cycling (e.g. only one layer present).
         const bg = layers[0];
         if (bg && list && list.length) {
             const img = new Image();
@@ -2023,7 +1251,6 @@ function initBackground() {
         return;
     }
 
-    // How long each image stays before crossfading to the next.
     const HOLD = 8000;
 
     let index = 0;       // which image in the list is showing
@@ -2037,14 +1264,10 @@ function initBackground() {
         img.onload = () => {
             layer.style.backgroundImage = `url("${src}")`;
 
-            // Restart the drift animation from the start on this layer.
             layer.classList.remove("is-active");
-            // Force reflow so removing + re-adding the class re-triggers the
-            // CSS animation, otherwise the browser ignores the re-add.
             void layer.offsetWidth;
             layer.classList.add("is-active");
 
-            // Fade the other layer out.
             layers[1 - layerIndex].classList.remove("is-active");
         };
 
@@ -2055,10 +1278,8 @@ function initBackground() {
         img.src = src;
     };
 
-    // Show the first image immediately on the front layer.
     show(index, front);
 
-    // Only cycle if there's more than one image.
     if (list.length < 2) return;
 
     setInterval(() => {
@@ -2072,47 +1293,90 @@ function initBackground() {
    9. BOOT
 ---------------------------------------------------------------------- */
 
-/* Deep-merge plain objects (arrays and primitives are replaced wholesale).
-   Used to overlay fetched JSON on top of the inline SITE defaults. */
-function deepMerge(base, override) {
-    if (Array.isArray(override) || typeof override !== "object" || override === null) {
-        return override;
-    }
+/* Fetch the content JSON. JSON is the single source of truth — there is no
+   inline fallback to merge onto, so this just loads + parses + returns it.
 
-    const out = {...base};
+   Returns { data, error }:
+     - data:  the parsed JSON on success, otherwise null.
+     - error: null on success, otherwise { kind, detail } describing why the
+              load failed. init() turns a null/empty result into the error
+              screen.
 
-    for (const key of Object.keys(override)) {
-        const b = base ? base[key] : undefined;
-        const o = override[key];
-
-        out[key] = b && typeof b === "object" && !Array.isArray(b) &&
-        o && typeof o === "object" && !Array.isArray(o)
-            ? deepMerge(b, o)
-            : o;
-    }
-
-    return out;
-}
-
-/* If SITE.dataUrl is set, fetch it and overlay it on the inline defaults.
-   Any network/parse failure silently keeps the inline content, so the page
-   never breaks just because the backend is down. */
+   Failure shapes:
+     - "fetch" — couldn't load it at all (404 / network / file:// CORS).
+     - "parse" — loaded, but the body wasn't valid JSON. */
 async function loadContent() {
-    if (!SITE.dataUrl) return SITE;
+    let res;
+    try {
+        res = await fetch(DATA_URL, {headers: {Accept: "application/json"}});
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`.trim());
+    } catch (err) {
+        console.error("Content fetch failed:", err);
+        return {data: null, error: {kind: "fetch", detail: `Could not load ${DATA_URL}: ${err.message}`}};
+    }
 
     try {
-        const res = await fetch(SITE.dataUrl, {
-            headers: {Accept: "application/json"},
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         const data = await res.json();
-        return deepMerge(SITE, data);
+        return {data, error: null};
     } catch (err) {
-        console.warn("Content fetch failed, using inline defaults:", err);
-        return SITE;
+        console.error("Content parse failed:", err);
+        return {data: null, error: {kind: "parse", detail: `${DATA_URL} is not valid JSON: ${err.message}`}};
     }
+}
+
+/* The visible screen shown when there is nothing to render: the JSON failed
+   to load/parse, or loaded but had no usable sections. Plain DOM, themed via
+   the same CSS vars, no deps. Gives the visitor a calm "temporarily
+   unavailable" message + a contact escape hatch, and tucks the technical
+   reason into a <details> for whoever maintains the site.
+
+   It lays down a minimal brand + footer so the chrome isn't half-built, and
+   skips the nav/tabs/background wiring that assume real sections exist.
+
+   Note: when the JSON failed to load, SITE is empty, so the brand and the
+   contact escape hatch below simply render nothing — that's fine. If the JSON
+   loaded but was merely missing sections, brand/socials may still show. */
+function renderErrorState(reason) {
+    const main = $("#main");
+
+    // Minimal header brand (empty if the JSON never loaded).
+    const brand = $("#brand");
+    if (brand) brand.textContent = SITE.brand || "";
+
+    if (main) {
+        main.innerHTML = "";
+
+        const wrap = el("div", {class: "block block--wide"});
+        const box = el("div", {class: "error-state", role: "alert"});
+
+        box.appendChild(el("h1", {class: "error-state__title"}, "Stránka je dočasne nedostupná"));
+        box.appendChild(el(
+            "p",
+            {class: "error-state__lead"},
+            "Obsah sa práve nepodarilo načítať. Skús to prosím o chvíľu znova. "
+        ));
+
+        // Contact escape hatch from socials, if any survived (none if the JSON
+        // failed to load) — so the visitor isn't fully stuck.
+        const socials = (SITE.socials || []).filter((s) => s && s.url);
+        if (socials.length) {
+            box.appendChild(buildSocials(socials));
+        }
+
+        // Technical detail for the maintainer, collapsed by default.
+        if (reason && reason.detail) {
+            const details = el("details", {class: "error-state__details"});
+            details.appendChild(el("summary", {}, "Technické detaily"));
+            details.appendChild(el("p", {}, escapeAttr(reason.detail)));
+            box.appendChild(details);
+        }
+
+        wrap.appendChild(box);
+        main.appendChild(wrap);
+    }
+
+    // A footer is harmless and keeps the page feeling whole.
+    renderFooter();
 }
 
 /*
@@ -2121,9 +1385,28 @@ async function loadContent() {
  */
 
 async function init() {
-    // Replace the module-level SITE with the merged result so every render
-    // function (which all read SITE) picks up the fetched content.
-    SITE = await loadContent();
+    const {data, error} = await loadContent();
+    SITE = data || {};
+
+    // JSON is the single source of truth: render it, or show the error screen.
+    // Three ways we end up with nothing to render:
+    //   - "fetch": couldn't load the file (404 / network / file:// CORS),
+    //   - "parse": loaded but wasn't valid JSON,
+    //   - "empty": loaded + parsed fine, but had no usable `sections`.
+    const hasContent = getSections().length > 0;
+
+    if (!hasContent) {
+        const reason = error || {
+            kind: "empty",
+            detail: `${DATA_URL} loaded but contained no usable "sections".`,
+        };
+        console.error("No renderable content — showing error screen:", reason.detail);
+
+        renderErrorState(reason);
+        initInputMode();
+        initTheme();
+        return;
+    }
 
     renderNav();
     renderContent();
@@ -2135,9 +1418,6 @@ async function init() {
     initTabs();
     initBackground();
 
-    // Skull mascot — runs after renderNav() moved #headerSkull into .brand-wrap.
-    // Wrapped so that even if the skull module fails, the rest of the site still
-    // renders normally.
     try {
         initSkull();
     } catch (err) {

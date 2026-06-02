@@ -1720,6 +1720,68 @@ body.lightbox-open {
 .lightbox:not(.is-open) {
     pointer-events: none;
 }
+/* ----------------------------------------------------------------------
+   ERROR STATE — shown when site-spec.json can't be loaded/parsed and there
+   is no inline content to fall back to. Append to styles.css. Uses the same
+   theme tokens as the rest of the site, so it re-themes for free.
+---------------------------------------------------------------------- */
+
+.error-state {
+    /* Roomy, centered card so the message reads as intentional, not broken. */
+    padding: 2.5rem 1.75rem;
+    border: 1px solid var(--border, rgba(127, 127, 127, 0.25));
+    border-radius: 14px;
+    background: var(--bg-elevated, rgba(127, 127, 127, 0.06));
+    text-align: center;
+}
+
+.error-state__title {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    line-height: 1.2;
+}
+
+.error-state__lead {
+    margin: 0 auto 1.5rem;
+    max-width: 38rem;
+    color: var(--text-muted, inherit);
+    line-height: 1.6;
+}
+
+/* Reuse the header .socials layout but center it here. */
+.error-state .socials {
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+}
+
+.error-state__details {
+    margin-top: 1.5rem;
+    text-align: left;
+    max-width: 38rem;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.875rem;
+    color: var(--text-muted, inherit);
+}
+
+.error-state__details summary {
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.8;
+}
+
+.error-state__details summary:hover {
+    opacity: 1;
+}
+
+.error-state__details p {
+    margin: 0.5rem 0 0;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: var(--bg-base, rgba(127, 127, 127, 0.1));
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    word-break: break-word;
+}
 
 /*
   Built from m-remis/static-web-template

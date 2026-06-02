@@ -1,0 +1,482 @@
+{
+  "brand": "RustCust",
+  "sections": [
+    {
+      "id": "home",
+      "label": "Domov",
+      "blocks": [
+        {
+          "type": "hero",
+          "width": "wide",
+          "eyebrow": "RustCust — cyklodielňa",
+          "title": "Servis bicyklov a lyží, custom úpravy a guiding v <em>Rajci</em>.",
+          "lead": "Bla bla bla nejaky text"
+        },
+        {
+          "type": "text",
+          "width": "wide",
+          "text": "RustCust je malá cyklodielňa v Rajci. Namiesto anonymného servisu ponúka osobný prístup, praktické riešenia a prácu, ktorú je vidieť na výsledku."
+        },
+        {
+          "type": "cards",
+          "linked": true,
+          "items": [
+            {
+              "title": "Servis",
+              "body": "Diagnostika, nastavenie, umývanie, opravy bicyklov, ručný servis lyží a snowboardov v zimnom období.",
+              "meta": "Cenník a podmienky",
+              "url": "#servis"
+            },
+            {
+              "title": "Guiding",
+              "body": "Lokálne výjazdy, bikeškola a sprevádzanie po trasách v okolí Rajca a Rajeckej doliny.",
+              "meta": "Balíky a rezervácia",
+              "url": "#guiding"
+            },
+            {
+              "title": "Custom",
+              "body": "Zákazkové úpravy, prestavby retro bicyklov, custom sedlá a drobnosti na mieru.",
+              "meta": "Projekty a úpravy",
+              "url": "#custom"
+            }
+          ]
+        },
+        {
+          "type": "slideshow",
+          "name": "RustCust v skratke",
+          "slides": [
+            {
+              "src": "assets/slides/shop.jpg",
+              "title": "Cyklodielňa v Rajci",
+              "caption": "Servis, opravy a úpravy bicyklov."
+            },
+            {
+              "src": "assets/slides/flight.jpg",
+              "title": "Guiding",
+              "caption": "Lokálne trasy a výjazdy v okolí Rajca."
+            },
+            {
+              "src": "assets/slides/peugeot.jpg",
+              "title": "Custom práca",
+              "caption": "Retro bicykle, prestavby a detaily na mieru."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "servis",
+      "label": "Servis",
+      "title": "Servis.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Servis bicyklov, cyklohygiena a v zimnom období aj ručný servis lyží a snowboardov. Každý bicykel je iný, preto sa výsledná cena môže líšiť podľa stavu, rozsahu práce a použitých dielov."
+        },
+        {
+          "type": "cards",
+          "items": [
+            {
+              "title": "Bicykle",
+              "body": "Diagnostika, nastavenie bŕzd a radenia, centrovanie, kontrola spojov, premazanie a bežné servisné úkony.",
+              "meta": "Diagnostika / veľký servis"
+            },
+            {
+              "title": "Cyklohygiena",
+              "body": "Základné alebo detailné umytie bicykla vrátane čistenia pohonu, sušenia a premazania.",
+              "meta": "Čistý bike jazdí lepšie"
+            },
+            {
+              "title": "Lyže a snowboardy",
+              "body": "V zimnom období ručný servis lyží a snowboardov podľa dohody.",
+              "meta": "Zimný servis"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "name": "Cenník servisu bicyklov",
+          "blurb": "Ceny sú orientačné a môžu sa líšiť podľa stavu bicykla a náročnosti práce. Materiál nie je zahrnutý v cene služby.",
+          "headings": [
+            "Úkon",
+            "Popis",
+            "Cena"
+          ],
+          "rows": [
+            [
+              "Diagnostika a kontrola bicykla",
+              "Základná kontrola stavu bicykla.",
+              "12 €"
+            ],
+            [
+              "Malý servis",
+              "Diagnostika, nastavenie bŕzd a prehadzovačiek, kontrola a premazanie spojov, dotiahnutie skrutiek momentovým kľúčom, čistenie a premazanie reťaze, dofúkanie kolies.",
+              "30 €"
+            ],
+            [
+              "Stredný servis",
+              "Malý servis + centrovanie kolies, kontrola a nastavenie nábojov.",
+              "45 €"
+            ],
+            [
+              "Veľký servis",
+              "Stredný servis + umývanie bicykla, dôkladné vyčistenie pohonu ultrazvukom, premazanie a nastavenie pohonu, čistenie a odmastenie bŕzd, kontrola a premazanie ložísk v hlavovom a stredovom zložení, výmena bowdenov a laniek.",
+              "95 €"
+            ],
+            [
+              "Základné umytie",
+              "Celkové umytie bicykla, sušenie, premazanie reťaze.",
+              "15 €"
+            ],
+            [
+              "Detailné umytie",
+              "Základné umytie + čistenie pohonu v ultrazvuku, následné premazanie a čistenie citlivých súčiastok parou.",
+              "25 €"
+            ],
+            [
+              "Mimo-cenníkové úkony",
+              "Práca mimo základného cenníka podľa dohody.",
+              "35 €/hod"
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "name": "Podmienky servisu",
+          "headings": [
+            "Podmienka",
+            "Detail"
+          ],
+          "rows": [
+            [
+              "Odhad ceny",
+              "Odhadovaná cena servisu sa môže líšiť od reálnej ceny. Každý bicykel je jedinečný."
+            ],
+            [
+              "Schválenie práce",
+              "Akýkoľvek zákrok sa vykonáva až po odsúhlasení zákazníkom."
+            ],
+            [
+              "Retro a vintage bicykle",
+              "Servis starších bicyklov môže byť časovo a technicky náročnejší."
+            ],
+            [
+              "Doplnky",
+              "Doplnky, ktoré by sa mohli poškodiť pri manipulácii, je potrebné vopred demontovať."
+            ],
+            [
+              "Nadmerne špinavý bicykel",
+              "Pri nadmerne špinavom bicykli môže byť účtovaný poplatok za čistenie 15 €."
+            ],
+            [
+              "Skladovanie",
+              "Ak si zákazník nevyzdvihne bicykel do troch pracovných dní od dohodnutého termínu, môže byť účtované skladovanie 2 €/deň."
+            ]
+          ]
+        },
+        {
+          "type": "slideshow",
+          "name": "Servis a dielňa",
+          "slides": [
+            {
+              "src": "assets/slides/mr_fix.jpg",
+              "title": "Servis bicyklov",
+              "caption": "Diagnostika, nastavenie a opravy."
+            },
+            {
+              "src": "assets/slides/mr_fix_2.jpg",
+              "title": "Servis bicyklov",
+              "caption": "Diagnostika, nastavenie a opravy."
+            },
+            {
+              "src": "assets/slides/mr_clean.jpg",
+              "title": "Cyklohygiena",
+              "caption": "Čistenie a starostlivosť o pohon."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guiding",
+      "label": "Guiding",
+      "title": "Guiding.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Guiding je pre ľudí, ktorí chcú spoznať lokálne trasy, jazdiť istejšie alebo si dať výjazd bez toho, aby museli riešiť plánovanie. Vhodné pre jednotlivcov, dvojice aj malé skupiny."
+        },
+        {
+          "type": "cards",
+          "items": [
+            {
+              "title": "Lokálny výjazd",
+              "body": "Krátky výjazd v okolí Rajca podľa kondície a skúseností jazdcov.",
+              "meta": "Jednoduchý štart"
+            },
+            {
+              "title": "Individuálny guiding",
+              "body": "Trasa, tempo a náročnosť podľa dohody. Vhodné pre ľudí, ktorí chcú jazdiť konkrétny typ terénu.",
+              "meta": "Na mieru"
+            },
+            {
+              "title": "Bikeškola",
+              "body": "Základy techniky jazdy, istota na bicykli, práca s telom a bicyklom v teréne.",
+              "meta": "Technika a istota"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "name": "Guiding balíky",
+          "blurb": "Tieto ceny sú zatiaľ návrh štruktúry",
+          "headings": [
+            "Balík",
+            "Popis",
+            "Cena"
+          ],
+          "rows": [
+            [
+              "Krátky výjazd",
+              "2–3 hodiny, lokálna trasa v okolí Rajca.",
+              "dohodou"
+            ],
+            [
+              "Poldenný guiding",
+              "Dlhší výjazd s plánovanou trasou a prestávkami.",
+              "dohodou"
+            ],
+            [
+              "Individuálny guiding",
+              "Trasa, tempo a náročnosť podľa dohody.",
+              "dohodou"
+            ],
+            [
+              "Bikeškola",
+              "Základy techniky jazdy alebo individuálna práca na konkrétnych zručnostiach.",
+              "dohodou"
+            ]
+          ]
+        },
+        {
+          "type": "slideshow",
+          "name": "Výjazdy a trasy",
+          "slides": [
+            {
+              "src": "assets/slides/ride.jpg",
+              "title": "Lokálne trasy",
+              "caption": "Výjazdy v okolí Rajca."
+            },
+            {
+              "src": "assets/slides/ride_2.jpg",
+              "title": "Bikeškola",
+              "caption": "Technika jazdy a istota na bicykli."
+            },
+            {
+              "src": "assets/slides/ride_3.jpg",
+              "title": "Na mieru",
+              "caption": "Tempo a náročnosť podľa skupiny."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "custom",
+      "label": "Custom",
+      "title": "Custom.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Custom časť je o úpravách, opravách a prestavbách bicyklov, najmä retro a vintage kúskov. Cieľom nie je len funkčnosť, ale aj charakter, detail a výsledok, ktorý dáva bicyklu nový život."
+        },
+        {
+          "type": "cards",
+          "items": [
+            {
+              "title": "Retro prestavby",
+              "body": "Úpravy starších bicyklov na praktické mestské alebo štýlové jazdenie.",
+              "meta": "Nový život pre starý bike"
+            },
+            {
+              "title": "Custom detaily",
+              "body": "Sedlá, poťahy, drobnosti na mieru a úpravy podľa predstavy zákazníka.",
+              "meta": "Detail robí celok"
+            },
+            {
+              "title": "Individuálne projekty",
+              "body": "Každý custom projekt sa rieši individuálne podľa bicykla, rozpočtu a cieľa.",
+              "meta": "Cena dohodou"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "name": "Custom práce",
+          "blurb": "Pri custom práci je lepšie uvádzať orientačné kategórie, nie tvrdý e-shop cenník. Finálna cena závisí od bicykla, dielov a rozsahu zásahu.",
+          "headings": [
+            "Typ práce",
+            "Popis",
+            "Cena"
+          ],
+          "rows": [
+            [
+              "Konzultácia projektu",
+              "Zhodnotenie bicykla, predstavy, možností a odhad rozsahu práce.",
+              "dohodou"
+            ],
+            [
+              "Retro prestavba",
+              "Úprava staršieho bicykla na nový účel alebo štýl.",
+              "dohodou"
+            ],
+            [
+              "Custom sedlo / detail",
+              "Poťah, doplnok alebo drobná úprava na mieru.",
+              "dohodou"
+            ],
+            [
+              "Individuálny projekt",
+              "Komplexnejšia zákazková práca podľa dohody.",
+              "dohodou"
+            ]
+          ]
+        },
+        {
+          "type": "slideshow",
+          "name": "Hotové custom projekty",
+          "slides": [
+            {
+              "src": "assets/slides/custom.jpeg",
+              "title": "BMX",
+              "caption": "Prestavba a úprava na mieru."
+            },
+            {
+              "src": "assets/slides/custom_2.jpeg",
+              "title": "Detail práce",
+              "caption": "Custom lakovanie"
+            },
+            {
+              "src": "assets/slides/custom_3.jpeg",
+              "title": "Detail práce",
+              "caption": "Sedlo"
+            },
+            {
+              "src": "assets/slides/custom_4.jpeg",
+              "title": "Hotový projekt",
+              "caption": "Bicykel pripravený späť do života."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "findme",
+      "label": "Kde ma nájdeš",
+      "title": "Kde ma nájdeš.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Cyklodielňu RustCust nájdeš na adrese M. R. Štefánika 624/10, Rajec."
+        },
+        {
+          "type": "map",
+          "mode": "embed",
+          "embed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2612.8265648432184!2d18.631298776804456!3d49.08993598438358!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4714f55524f56759%3A0xcec166df13056af7!2sCyklodie%C5%88a%20RustCust!5e0!3m2!1ssk!2sus!4v1780425535664!5m2!1ssk!2sus",
+          "url": "https://maps.app.goo.gl/sC1H3aNMKeq9ZPvG6",
+          "label": "Mapa s polohou cyklodielne RustCust",
+          "address": "M. R. Štefánika 624/10, Rajec"
+        },
+        {
+          "type": "slideshow",
+          "name": "Cyklodielňa",
+          "slides": [
+            {
+              "src": "assets/slides/workshop_outside.png",
+              "title": "Cyklodielňa RustCust",
+              "caption": "M. R. Štefánika 624/10",
+              "text": "Rajec"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kontakt",
+      "label": "Kontakt",
+      "title": "Kontakt.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme."
+        },
+        {
+          "type": "links",
+          "items": [
+            {
+              "label": "Telefón",
+              "handle": "+421 000 000 00",
+              "url": "tel:+42100000000",
+              "icon": "phone"
+            },
+            {
+              "label": "Email",
+              "handle": "r@r.sk",
+              "url": "mailto:r@r.sk",
+              "icon": "email"
+            },
+            {
+              "label": "Instagram",
+              "handle": "@rustcust",
+              "url": "https://www.instagram.com/rustcust/",
+              "icon": "instagram"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "name": "Firemné údaje",
+          "headings": [
+            "Údaj",
+            "Hodnota"
+          ],
+          "rows": [
+            [
+              "Prevádzka",
+              "RustCust – cyklodielňa"
+            ],
+            [
+              "Meno",
+              "Rastislav Buchta"
+            ],
+            [
+              "IČO",
+              "0"
+            ],
+            [
+              "DIČ",
+              "0"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "note": "Vytvoril a spravuje <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Michal</a>"
+  },
+  "socials": [
+    {
+      "label": "RustCust",
+      "icon": "instagram",
+      "url": "https://www.instagram.com/rustcust/"
+    }
+  ],
+  "backgrounds": [
+    "assets/background/background.jpg",
+    "assets/background/background_2.jpg",
+    "assets/background/background_3.jpg",
+    "assets/background/background_4.jpg",
+    "assets/background/background_5.jpg"
+  ]
+}
