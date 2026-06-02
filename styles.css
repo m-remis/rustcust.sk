@@ -985,6 +985,7 @@ a.card__link {
     display: block;
     /* gently match the site mood without breaking legibility */
     filter: saturate(0.95);
+    pointer-events: none;   /* view-only on all browsers; open via the button */
 }
 
 /* ---- Map: static mode (no iframe, clean themed card) ------------------ */

@@ -589,7 +589,7 @@ let SITE = {
         },
 
         findme: {
-            title: "Kde ma nájdete.",
+            title: "Kde ma nájdeš.",
             blocks: [
                 {
                     type: "text",
@@ -603,10 +603,9 @@ let SITE = {
                     mode: "embed",
 
                     // Google Maps embed for the physical workshop/location.
-                    embed: "https://maps.google.com/maps?q=M.%20R.%20%C5%A0tef%C3%A1nika%20624%2F10%2C%20Rajec&z=15&output=embed",
-
+                    embed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2612.8265648432184!2d18.631298776804456!3d49.08993598438358!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4714f55524f56759%3A0xcec166df13056af7!2sCyklodie%C5%88a%20RustCust!5e0!3m2!1ssk!2sus!4v1780425535664!5m2!1ssk!2sus",
                     // Normal map link used by the "Open in Maps" button.
-                    url: "https://www.google.com/maps/search/?api=1&query=M.%20R.%20%C5%A0tef%C3%A1nika%20624%2F10%2C%20Rajec",
+                    url: "https://maps.app.goo.gl/sC1H3aNMKeq9ZPvG6",
 
                     label: "Mapa s polohou cyklodielne RustCust",
                     address: "M. R. Štefánika 624/10, Rajec",
@@ -617,7 +616,7 @@ let SITE = {
                     slides: [
                         {
                             src: "assets/slides/workshop_outside.png",
-                            title: "RustCust",
+                            title: "Cyklodielňa RustCust",
                             caption: "M. R. Štefánika 624/10",
                             text: "Rajec",
                         },
