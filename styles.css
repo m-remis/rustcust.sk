@@ -32,6 +32,13 @@
 
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.06),
     0 8px 30px rgba(0, 0, 0, 0.08);
+
+    /* Interaction tokens — theme-independent (same in light + dark).
+       Keyboard focus ring (only shown after real keyboard nav) and the
+       subtle "press" shrink shared by every button-like control. */
+    --focus-ring: 2px solid var(--accent);
+    --focus-offset: 3px;
+    --press-scale: 0.94;
 }
 
 /* Dark (default) */
@@ -61,12 +68,33 @@
     --overlay-top: rgba(14, 15, 19, 0.79);
     --overlay-bottom: rgba(14, 15, 19, 0.98);
     --header-bg: rgba(14, 15, 19, 0.82);
-    --panel-blur: 14px;
+    --panel-blur: 8px; /* frosted-glass radius; lowered from 14px to ease scroll repaint cost without visibly changing the look */
 
     /* — Carousel (uses the tokens above; these are the only extras) — */
     --carousel-scrim: rgba(0, 0, 0, 0.55); /* caption gradient over image */
     --carousel-chip-bg: rgba(0, 0, 0, 0.45); /* "n / total" counter chip */
     --carousel-chip-text: #f4f5f8;
+
+    /* — Brand / social colors —
+       Per-platform colors for social + contact icons. Currently identical in
+       light and dark mode (kept on hover too); defined per-theme so they CAN
+       diverge later without hunting through rules. Change a brand color here. */
+    --brand-instagram: #e1306c;
+    --brand-youtube: #ff0000;
+    --brand-phone: #2e9e4f;
+    --brand-email: #3b5bdb;
+
+    /* — On-image controls (lightbox, carousel dots) —
+       These sit on top of photos, so they're deliberately NOT theme tokens:
+       they stay dark-on-light regardless of theme for legibility over images. */
+    --on-image-text: #fff;            /* icon/text drawn over a photo */
+    --on-image-btn-bg: rgba(0, 0, 0, 0.45);     /* idle control background */
+    --on-image-btn-bg-hover: rgba(0, 0, 0, 0.7); /* hovered control background */
+    --on-image-hairline: rgba(255, 255, 255, 0.25); /* control border */
+    --on-image-veil: rgba(0, 0, 0, 0.88);       /* full lightbox backdrop */
+    --dot-veil-bg: rgba(0, 0, 0, 0.35);         /* dots pill background */
+    --dot-ring: rgba(255, 255, 255, 0.75);      /* idle dot outline */
+    --dot-fill-hover: rgba(255, 255, 255, 0.35);/* dot fill on hover */
 }
 
 /* Light */
@@ -101,12 +129,29 @@
     --overlay-top: rgba(255, 255, 255, 0.90);
     --overlay-bottom: rgba(255, 255, 255, 0.62);
     --header-bg: rgba(255, 255, 255, 0.90);
-    --panel-blur: 14px;
+    --panel-blur: 8px;
 
     /* — Carousel (caption scrim/chip stay dark for legibility over photos) — */
     --carousel-scrim: rgba(0, 0, 0, 0.50);
     --carousel-chip-bg: rgba(0, 0, 0, 0.45);
     --carousel-chip-text: #f4f5f8;
+
+    /* — Brand / social colors — (identical to dark; see note there) */
+    --brand-instagram: #e1306c;
+    --brand-youtube: #ff0000;
+    --brand-phone: #2e9e4f;
+    --brand-email: #3b5bdb;
+
+    /* — On-image controls — (identical to dark: these live over photos, so
+       they stay dark-on-light in both themes for legibility) */
+    --on-image-text: #fff;
+    --on-image-btn-bg: rgba(0, 0, 0, 0.45);
+    --on-image-btn-bg-hover: rgba(0, 0, 0, 0.7);
+    --on-image-hairline: rgba(255, 255, 255, 0.25);
+    --on-image-veil: rgba(0, 0, 0, 0.88);
+    --dot-veil-bg: rgba(0, 0, 0, 0.35);
+    --dot-ring: rgba(255, 255, 255, 0.75);
+    --dot-fill-hover: rgba(255, 255, 255, 0.35);
 }
 
 /* ---- Reset-ish -------------------------------------------------------- */
@@ -206,8 +251,8 @@ a {
 }
 
 body.keyboard-nav :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
     border-radius: 4px;
 }
 
@@ -398,7 +443,7 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 
 .theme-toggle:active,
 .menu-toggle:active {
-    transform: scale(0.94);
+    transform: scale(var(--press-scale));
 }
 
 .theme-toggle__icon {
@@ -499,19 +544,19 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 }
 
 .socials__link--instagram svg {
-    color: #e1306c;
+    color: var(--brand-instagram);
 }
 
 .socials__link--youtube svg {
-    color: #ff0000;
+    color: var(--brand-youtube);
 }
 
 .socials__link--phone svg {
-    color: #2e9e4f;
+    color: var(--brand-phone);
 }
 
 .socials__link--email svg {
-    color: #3b5bdb;
+    color: var(--brand-email);
 }
 
 /* ---- Mobile nav ------------------------------------------------------- */
@@ -563,7 +608,7 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 }
 
 .nav-mobile__close:active {
-    transform: scale(0.94);
+    transform: scale(var(--press-scale));
 }
 
 .nav-mobile.is-open {
@@ -879,9 +924,9 @@ a.card__link {
 
 /* Per-platform brand colors for contact-row icons. Brand colors, not theme
    tokens — intentionally identical in light and dark mode, and kept on hover. */
-.link-list--phone .link-list__icon { color: #2e9e4f; }
-.link-list--email .link-list__icon { color: #3b5bdb; }
-.link-list--instagram .link-list__icon { color: #e1306c; }
+.link-list--phone .link-list__icon { color: var(--brand-phone); }
+.link-list--email .link-list__icon { color: var(--brand-email); }
+.link-list--instagram .link-list__icon { color: var(--brand-instagram); }
 
 /* ---- Table (price list / structured rows) ----------------------------- */
 /* A structured table rendered by buildTable() in script.js from a `table`
@@ -1157,7 +1202,7 @@ a.card__link {
 }
 
 .carousel__expand:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -2px;
 }
 
@@ -1298,7 +1343,7 @@ a.card__link {
     padding: 0.35rem 0.5rem;
     border-radius: 999px;
 
-    background: rgba(0, 0, 0, 0.35);
+    background: var(--dot-veil-bg);
     border: 1px solid rgba(255, 255, 255, 0.18);
 
     -webkit-backdrop-filter: blur(6px);
@@ -1309,18 +1354,18 @@ a.card__link {
     width: 0.55rem;
     height: 0.55rem;
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, 0.75);
+    border: 1px solid var(--dot-ring);
     border-radius: 50%;
     background: transparent;
     transition: background var(--transition), transform var(--transition);
 }
 
 .carousel__dot:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: var(--dot-fill-hover);
 }
 
 .carousel__dot.is-active {
-    background: #fff;
+    background: var(--on-image-text);
     transform: scale(1.15);
 }
 
@@ -1412,7 +1457,7 @@ a.card__link {
     }
 
     .carousel__dot.is-active:hover {
-        background: #fff;
+        background: var(--on-image-text);
     }
 }
 
@@ -1591,7 +1636,7 @@ body.menu-open {
     justify-content: center;
     gap: 1rem;
     padding: clamp(1rem, 4vw, 3rem);
-    background: rgba(0, 0, 0, 0.88);
+    background: var(--on-image-veil);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     opacity: 0;
@@ -1621,7 +1666,7 @@ body.menu-open {
     margin: 0;
     max-width: min(100%, 48rem);
     text-align: center;
-    color: #f4f5f8;
+    color: var(--carousel-chip-text);
     font-size: 0.95rem;
     line-height: 1.4;
     cursor: default;
@@ -1636,10 +1681,10 @@ body.menu-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid var(--on-image-hairline);
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
+    background: var(--on-image-btn-bg);
+    color: var(--on-image-text);
     font-size: 1.6rem;
     line-height: 1;
     cursor: pointer;
@@ -1647,17 +1692,17 @@ body.menu-open {
 }
 
 .lightbox__close:hover {
-    border-color: #fff;
-    background: rgba(0, 0, 0, 0.7);
+    border-color: var(--on-image-text);
+    background: var(--on-image-btn-bg-hover);
 }
 
 .lightbox__close:active {
-    transform: scale(0.94);
+    transform: scale(var(--press-scale));
 }
 
 .lightbox__close:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
 }
 
 /* Prev / next arrows in the expanded view, vertically centered on each edge.
@@ -1671,10 +1716,10 @@ body.menu-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid var(--on-image-hairline);
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
+    background: var(--on-image-btn-bg);
+    color: var(--on-image-text);
     font-size: 1.4rem;
     line-height: 1;
     cursor: pointer;
@@ -1690,17 +1735,17 @@ body.menu-open {
 }
 
 .lightbox__nav:hover {
-    border-color: #fff;
-    background: rgba(0, 0, 0, 0.7);
+    border-color: var(--on-image-text);
+    background: var(--on-image-btn-bg-hover);
 }
 
 .lightbox__nav:active {
-    transform: translateY(-50%) scale(0.94);
+    transform: translateY(-50%) scale(var(--press-scale));
 }
 
 .lightbox__nav:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
 }
 
 @media (prefers-reduced-motion: reduce) {

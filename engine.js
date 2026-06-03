@@ -886,6 +886,74 @@ function renderFooter() {
 }
 
 /* ----------------------------------------------------------------------
+   4B. RENDER DOCUMENT HEAD
+
+   Single source of truth for the page's metadata: everything here is driven
+   by SITE.meta. The tags also exist statically in index.html so crawlers and
+   social scrapers (which don't run JS) still see them — this function keeps
+   them in sync with the config and is the canonical place to change them.
+
+   Idempotent: each tag is found-or-created by a stable selector and only its
+   value is updated, so running this never duplicates tags. To change the
+   title/description/OG/etc., edit SITE.meta in site-spec.json — not the HTML.
+---------------------------------------------------------------------- */
+
+function renderHead() {
+    const meta = SITE.meta;
+    if (!meta) return;
+
+    // <html lang>
+    if (meta.lang) document.documentElement.setAttribute("lang", meta.lang);
+
+    // <title>
+    if (meta.title) document.title = meta.title;
+
+    /* Find a <meta>/<link> by attribute (e.g. name="description" or
+       property="og:title"); create it in <head> if absent, then set its value
+       attribute. Keeps one tag per key — no duplicates on re-run. */
+    const setMeta = (attr, key, valueAttr, value) => {
+        if (value === undefined || value === null) return;
+        const head = document.head;
+        let node = head.querySelector(`meta[${attr}="${key}"]`);
+        if (!node) {
+            node = document.createElement("meta");
+            node.setAttribute(attr, key);
+            head.appendChild(node);
+        }
+        node.setAttribute(valueAttr, String(value));
+    };
+
+    const setLink = (rel, href) => {
+        if (!href) return;
+        const head = document.head;
+        let node = head.querySelector(`link[rel="${rel}"]`);
+        if (!node) {
+            node = document.createElement("link");
+            node.setAttribute("rel", rel);
+            head.appendChild(node);
+        }
+        node.setAttribute("href", href);
+    };
+
+    // Standard meta (name="...")
+    setMeta("name", "description", "content", meta.description);
+    setMeta("name", "author", "content", meta.author);
+    setMeta("name", "theme-color", "content", meta.themeColor);
+    setMeta("name", "twitter:card", "content", meta.twitterCard);
+
+    // Open Graph (property="..."). og:description can differ from the plain
+    // meta description; fall back to it when not separately specified.
+    setMeta("property", "og:type", "content", meta.ogType);
+    setMeta("property", "og:title", "content", meta.title);
+    setMeta("property", "og:description", "content", meta.ogDescription || meta.description);
+    setMeta("property", "og:url", "content", meta.domain);
+    if (meta.ogImage) setMeta("property", "og:image", "content", meta.ogImage);
+
+    // Canonical
+    setLink("canonical", meta.domain);
+}
+
+/* ----------------------------------------------------------------------
    5A. INPUT MODE
 ---------------------------------------------------------------------- */
 
@@ -1387,6 +1455,11 @@ function renderErrorState(reason) {
 async function init() {
     const {data, error} = await loadContent();
     SITE = data || {};
+
+    // Drive the document head (title, meta, OG, canonical) from SITE.meta.
+    // Done first so the metadata is correct even if we fall through to the
+    // error screen below.
+    renderHead();
 
     // JSON is the single source of truth: render it, or show the error screen.
     // Three ways we end up with nothing to render:

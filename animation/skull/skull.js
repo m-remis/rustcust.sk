@@ -9,7 +9,7 @@
    - 5 MORE taps while angry: "dizzy" - spins 5 times, lands on the dizzy
      frame for a couple of seconds, then returns to idle
 
-   Exposed as an ES module. Called from script.js inside init(),
+   Exposed as an ES module. Called from engine.js inside init(),
    after renderNav() has placed #headerSkull into .brand-wrap.
 
    NOTE: img.src paths are resolved relative to the HTML document

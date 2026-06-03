@@ -1,5 +1,16 @@
 {
   "brand": "RustCust",
+  "meta": {
+    "lang": "sk",
+    "domain": "https://www.rustcust.sk/",
+    "title": "RustCust — cyklodielňa v Rajci",
+    "description": "RustCust — cyklodielňa v Rajci. Servis bicyklov a lyží, custom úpravy a guiding v Rajeckej doline.",
+    "ogDescription": "Servis bicyklov a lyží, custom úpravy a guiding v Rajeckej doline.",
+    "author": "Rastislav Buchta",
+    "themeColor": "#0e0f13",
+    "ogType": "website",
+    "twitterCard": "summary"
+  },
   "sections": [
     {
       "id": "home",
