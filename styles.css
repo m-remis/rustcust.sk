@@ -196,6 +196,10 @@ html {
     scrollbar-gutter: stable;
 }
 
+html, body {
+    overscroll-behavior-y: none;
+}
+
 /* Fallback for older browsers that do not support scrollbar-gutter.
    Keep this on the root scroll container, not body, so the page layout width
    stays consistent between short and long tabs. */
