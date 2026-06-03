@@ -1,6 +1,6 @@
 /* =========================================================
    Static site template
-   script.js — content data + UI logic
+   engine.js — runtime engine + UI logic (content lives in site-spec.json)
    ========================================================= */
 
 "use strict";
