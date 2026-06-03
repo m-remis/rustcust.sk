@@ -29,7 +29,7 @@
        whole site (text, headings, gutters, gaps, content widths) bigger or
        smaller proportionally. 100% = browser default (usually 16px);
        106.25% ≈ 17px; 112.5% ≈ 18px. Applied on `html` below. */
-    --root-scale: 112.5%;
+    --root-scale: 106.25%;
 
     --gutter: clamp(1.25rem, 4vw, 2.5rem);
     --radius: 8px;
