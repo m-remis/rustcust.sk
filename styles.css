@@ -837,7 +837,11 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     flex-direction: column;
 }
 
-.card:hover {
+/* Only clickable cards react to the cursor. A plain (non-linked) .card stays
+   put — reacting like a button would be a false affordance (user hovers, it
+   lifts and glows, click does nothing). The lift/accent is reserved for
+   a.card__link, which is what buildCards adds only when the card is a link. */
+a.card__link:hover {
     transform: translateY(-3px);
     border-color: var(--accent);
 }
@@ -856,6 +860,43 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 
 a.card__link {
     display: flex;
+    cursor: pointer;
+    position: relative;
+}
+
+/* Persistent "go" cue on clickable cards, so the affordance survives on touch
+   (no hover on mobile) — not just on desktop hover. The arrow rides on the
+   accent meta line and nudges right on hover. */
+a.card__link .card__meta::after {
+    content: "→";
+    margin-left: 0.4rem;
+    display: inline-block;
+    font-size: 2.5em;
+    line-height: 0.5;
+    vertical-align: -0.09em;
+    transition: transform var(--transition);
+}
+
+a.card__link:hover .card__meta::after {
+    transform: translateX(3px);
+}
+
+/* Fallback for clickable cards with no meta line: a corner arrow on the card
+   itself, so the cue is guaranteed regardless of content. (The card is
+   position:relative above to anchor this.) */
+a.card__link:not(:has(.card__meta))::after {
+    content: "→";
+    position: absolute;
+    top: 1.1rem;
+    right: 1.2rem;
+    font-size: 1.2rem;
+    line-height: 1;
+    color: var(--accent);
+    transition: transform var(--transition);
+}
+
+a.card__link:not(:has(.card__meta)):hover::after {
+    transform: translateX(3px);
 }
 
 .card__meta {
@@ -1438,9 +1479,14 @@ a.card__link {
         border-color: var(--border);
     }
 
-    .card:hover {
+    a.card__link:hover {
         transform: none;
-        border-color: var(--border);
+        border-color: var(--accent);
+    }
+
+    a.card__link:hover .card__meta::after,
+    a.card__link:not(:has(.card__meta)):hover::after {
+        transform: none;
     }
 
     .link-list a:hover {
