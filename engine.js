@@ -879,10 +879,43 @@ function renderFooter() {
     const note = (SITE.footer && SITE.footer.note) || "";
 
     f.innerHTML = "";
-    f.append(
-        el("span", {}, `© ${year} ${SITE.brand || ""}`.trim()),
-        el("span", {}, note)
-    );
+
+    const copyright = el("span", {}, `© ${year} ${SITE.brand || ""}`.trim());
+    f.append(copyright);
+
+    // Optional visitor count, attached right after the © line. Driven by
+    // meta.analytics.countUrl (e.g. a GoatCounter /counter/TOTAL.json
+    // endpoint); absent config = no count, no request. The fetch is
+    // best-effort: any failure leaves the footer untouched, never throws.
+    const analytics = SITE.meta && SITE.meta.analytics;
+    if (analytics && analytics.countUrl) {
+        const countEl = el("span", {class: "footer__count"});
+        f.append(countEl);
+        renderVisitorCount(countEl, analytics.countUrl, analytics.countLabel);
+    }
+
+    f.append(el("span", {}, note));
+}
+
+/* Fetch the visitor count from a GoatCounter-style JSON endpoint and write it
+   into `target`. Best-effort: the count.js script (loaded in index.html) does
+   the actual tracking; this only displays the number. Requires "Allow adding
+   visitor counts on your website" to be enabled in the GoatCounter site
+   settings, otherwise the endpoint won't return a usable count. */
+async function renderVisitorCount(target, url, label) {
+    try {
+        const res = await fetch(url, {headers: {Accept: "application/json"}});
+        if (!res.ok) return;
+        const data = await res.json();
+        // GoatCounter returns { count: "1,234", count_unique: "..." }; count is
+        // already a localized string. Fall back across field names defensively.
+        const count = data.count_unique || data.count;
+        if (count == null || count === "") return;
+        target.textContent = label ? `${count} ${label}` : String(count);
+    } catch (err) {
+        // Network/parse failure — leave the footer count empty, never break.
+        console.warn("Visitor count unavailable:", err);
+    }
 }
 
 /* ----------------------------------------------------------------------

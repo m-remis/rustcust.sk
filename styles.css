@@ -318,7 +318,7 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     transition: opacity 1200ms ease;
     /* Continuous, seamless drift — zoom in and back out forever, no snap.
        Runs on both layers always; opacity (.is-active) decides which shows. */
-    /* Ken Burns drift disabled — toggle by commenting line below */
+    /* Ken Burns drift — toggle by commenting line below. */
     animation: bg-drift 15s ease-in-out infinite alternate;
 }
 
@@ -1500,6 +1500,19 @@ a.card__link {
 
 .site-footer a:hover {
     color: var(--accent);
+}
+
+/* Visitor count sits right after the © line. Empty until the count loads
+   (or stays empty if analytics is off / unreachable), and the ::before dot
+   only shows once there's text, so there's no stray leading dot. */
+.footer__count {
+    color: var(--text-faint);
+}
+
+.footer__count:not(:empty)::before {
+    content: "·";
+    margin: 0 0.5rem 0 0;
+    color: var(--text-faint);
 }
 
 /* ---- Responsive ------------------------------------------------------- */

@@ -9,7 +9,11 @@
     "author": "Rastislav Buchta",
     "themeColor": "#0e0f13",
     "ogType": "website",
-    "twitterCard": "summary"
+    "twitterCard": "summary",
+    "analytics": {
+      "countUrl": "https://rustcust.goatcounter.com/counter/TOTAL.json",
+      "countLabel": "návštev"
+    }
   },
   "sections": [
     {
@@ -474,7 +478,7 @@
     }
   ],
   "footer": {
-    "note": "Vytvoril a spravuje <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Michal</a>"
+    "note": "Made by <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Mišo</a>"
   },
   "socials": [
     {
