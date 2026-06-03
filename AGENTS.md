@@ -4,6 +4,30 @@ Guidance for AI coding agents working in this repository. Humans should read
 `README.md` instead; this file exists so an agent can make correct changes
 without rediscovering the structure each time.
 
+## Start here (routing)
+
+Pick the doc that matches your task — don't guess from filenames:
+
+- **Changing what the site says** (text, tabs, contact, prices, images, socials,
+  metadata) → it's almost always a `site-spec.json` edit. Read "The golden rule"
+  and "The block engine" below.
+- **Setting up a brand-new client site** → `CLIENT-CHECKLIST.md` (the per-client
+  fill-in list, file by file).
+- **Changing behavior or adding a content block type** → this file, sections
+  "The block engine" and "Key functions in `engine.js`".
+- **Checking a site is safe to ship** → run `node launch-check.js`; details in
+  `LAUNCH-CHECK.md`.
+
+**Hard rules (do not violate):**
+1. No build step, no framework, no bundler, no npm dependency for the runtime
+   site. Vanilla HTML/CSS/JS served as files.
+2. Content is **never** hardcoded in `index.html` or `engine.js`. It lives in
+   `site-spec.json`. The HTML is an empty shell.
+3. Don't remove the `Built from m-remis/static-web-template` fingerprint.
+4. After any change, validate: `node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"`,
+   `node --check engine.js`, then `node launch-check.js`. Make the smallest
+   change that satisfies the request; don't reformat unrelated code.
+
 ## What this project is
 
 A static personal/business site, built from a no-build template. **No build
@@ -11,9 +35,9 @@ step, no framework, no bundler, no package manager.** It is plain HTML + CSS +
 vanilla JS (ES modules) served as files. Do not introduce npm, bundlers,
 transpilers, TypeScript, frameworks, or a `package.json` for the *runtime site*.
 If a change seems to "need" tooling, it is the wrong change — find the no-build
-way to do it. (A separate `node launch-check.js` preflight script may exist; it
-is a dev-only tool run by hand, never loaded by the page, and uses only Node
-built-ins.)
+way to do it. (The `launch-check.js` preflight script is a dev-only tool run by
+hand, never loaded by the page, and uses only Node built-ins — see
+`LAUNCH-CHECK.md`.)
 
 The only runtime dependencies are the Google Fonts `<link>` (Inter, Instrument
 Serif, Oswald) and the site's own ES modules. `engine.js` is loaded as
@@ -89,6 +113,7 @@ runtime. Before editing markup or CSS, check whether the request is actually a
 | `404.html` / `404.css`                          | Not-found page; **inherits theme tokens from `styles.css`**   | layout of 404 only                 |
 | `animation/skull/`                              | Header mascot: `skull.js` (ES module), `skull.css`, `assets/` | mascot behavior/art                |
 | `CLIENT-CHECKLIST.md`                           | Per-client replacement + deploy checklist                     | client-site handoff rules          |
+| `launch-check.js` / `LAUNCH-CHECK.md`           | Pre-launch validator (dev-only, never served) + its docs      | before shipping; adding a block type|
 | `site.webmanifest`, `sitemap.xml`, `robots.txt` | PWA + SEO                                                     | domain/name changes                |
 | `assets/`                                       | favicon, `background/` images, `slides/` images               | swapping media                     |
 
@@ -417,8 +442,10 @@ There are no tests and no build. After editing:
       fail and shows the **error screen** (not a blank page); this catches it
       fast with a line/column.
     - `node --check engine.js` to catch JS syntax errors.
-    - If `launch-check.js` exists, run `node launch-check.js` for a fuller
-      preflight (placeholders, fake contact data, broken/missing assets, SEO).
+    - Run `node launch-check.js` for a fuller preflight (placeholders, fake
+      contact data, broken/missing/unused assets, SEO, domain/metadata
+      consistency); drive it to `PASS`. See `LAUNCH-CHECK.md` for flags and the
+      full check list.
 2. Serve and open the site — prefer `python3 -m http.server 8000` over
    `file://` (the page fetches `site-spec.json`; `file://` fails CORS and shows
    the error screen). Check: light/dark toggle, every nav tab, each block type

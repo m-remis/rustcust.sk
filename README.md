@@ -25,12 +25,21 @@ After editing the spec, sanity-check the JSON:
 node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"
 ```
 
+And before deploying, run the preflight validator — it catches placeholders,
+fake contact data, broken assets, and domain mismatches:
+
+```bash
+node launch-check.js
+```
+
 ## Docs
 
 - **`CLIENT-CHECKLIST.md`** — what to fill in for a new client site, file by
   file (content, metadata, assets, deploy).
 - **`AGENTS.md`** — how the engine works (the block system, theming, the tricky
   bits). Read this before changing behavior or adding a block type.
+- **`LAUNCH-CHECK.md`** — the `launch-check.js` preflight validator: what it
+  checks and how to run it.
 
 ## Deploy
 
