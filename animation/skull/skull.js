@@ -111,7 +111,7 @@ export function initSkull() {
     function scheduleBlink() {
         clearTimeout(blinkTimer);
 
-        const delay = 7000;
+        const delay = 5000;
 
         blinkTimer = setTimeout(() => {
             if (angry || dizzy) {
