@@ -1504,8 +1504,11 @@ a.card__link {
 
 /* Visitor count sits right after the © line. Empty until the count loads
    (or stays empty if analytics is off / unreachable), and the ::before dot
-   only shows once there's text, so there's no stray leading dot. */
-.footer__count {
+   only shows once there's text, so there's no stray leading dot. When it
+   links to the public dashboard it's a plain footer link and inherits the
+   shared `.site-footer a` style — same as the credit link — so both match.
+   The faint color applies only to the non-link span variant. */
+span.footer__count {
     color: var(--text-faint);
 }
 

@@ -889,7 +889,16 @@ function renderFooter() {
     // best-effort: any failure leaves the footer untouched, never throws.
     const analytics = SITE.meta && SITE.meta.analytics;
     if (analytics && analytics.countUrl) {
-        const countEl = el("span", {class: "footer__count"});
+        // Link to the public dashboard if one is configured, else a plain span.
+        const countEl = analytics.dashboardUrl
+            ? el("a", {
+                class: "footer__count",
+                href: analytics.dashboardUrl,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                "aria-label": "Štatistiky návštevnosti",
+            })
+            : el("span", {class: "footer__count"});
         f.append(countEl);
         renderVisitorCount(countEl, analytics.countUrl, analytics.countLabel);
     }

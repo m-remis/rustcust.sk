@@ -12,7 +12,8 @@
     "twitterCard": "summary",
     "analytics": {
       "countUrl": "https://rustcust.goatcounter.com/counter/TOTAL.json",
-      "countLabel": "návštev"
+      "countLabel": "návštev",
+      "dashboardUrl": "https://rustcust.goatcounter.com"
     }
   },
   "sections": [
