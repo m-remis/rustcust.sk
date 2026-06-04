@@ -45,6 +45,8 @@ import {initSkull} from "./animation/skull/skull.js";
      { "type": "map", "mode": "embed", "embed","url","label","address" }
      { "type": "slideshow", "name","blurb", "slides": [ { "src","title","caption","text" } ] }
      { "type": "table", "name","blurb", "headings": [...], "rows": [ [...], ... ] }
+     { "type": "gallery", "name","blurb","columns", "images": [ { "src","title","caption","text" } ] }
+     { "type": "photo", "src","title","caption","text" }
 
    IMPORTANT: block text intentionally supports small trusted inline HTML
    (<em>, <a>). Author these values yourself; never feed user-supplied raw
@@ -497,6 +499,18 @@ function getLightbox() {
     return lightboxApi;
 }
 
+/* Normalize image entries ({src,title,caption,text}) into the {src,caption}
+   shape the shared lightbox renders. Shared by the carousel and the gallery so
+   both feed the lightbox identically. */
+function toLightboxSlides(list) {
+    return (list || []).map((s, i) => ({
+        src: s.src,
+        caption:
+            [s.title, s.caption, s.text].filter(Boolean).join(" — ") ||
+            (s.title || s.caption || `Obrázok ${i + 1}`),
+    }));
+}
+
 function buildCarousel(block) {
     block = block || {};
     const list = (block.slides || []).filter((s) => s && s.src);
@@ -528,12 +542,7 @@ function buildCarousel(block) {
 
     const viewport = el("div", {class: "carousel__viewport"});
 
-    const lightboxSlides = list.map((s, i) => ({
-        src: s.src,
-        caption:
-            [s.title, s.caption, s.text].filter(Boolean).join(" — ") ||
-            (s.title || s.caption || `Slide ${i + 1}`),
-    }));
+    const lightboxSlides = toLightboxSlides(list);
 
     const slideNodes = list.map((s, i) => {
         const slide = el("figure", {
@@ -709,6 +718,108 @@ function buildCarousel(block) {
 }
 
 /* ----------------------------------------------------------------------
+   2C-bis. GALLERY / PHOTO (image grid, shares the carousel's lightbox)
+
+   buildGallery(block) renders a responsive grid of image tiles. Same theme
+   tokens and the SAME shared lightbox as the carousel (getLightbox), but every
+   image is visible at once instead of one paged frame. Click any tile → the
+   lightbox opens at that image, then arrow through the whole set. Broken images
+   fail silently (panel background shows through), matching the carousel.
+
+   Block shape:
+   { "type": "gallery", "name"?, "blurb"?, "columns"?: 2|3|4,
+     "images": [ { "src", "title"?, "caption"?, "text"? } ] }  // src required
+
+   buildPhoto(block) is single-image sugar: normalizes to a one-image gallery so
+   it shares the styling + lightbox. Shape: { "type": "photo", "src", ... }.
+---------------------------------------------------------------------- */
+
+function buildGallery(block) {
+    block = block || {};
+    const list = (block.images || []).filter((s) => s && s.src);
+    if (!list.length) return null;
+
+    const name = block.name;
+    const blurb = block.blurb;
+    const uid = `gallery-${++carouselSeq}`; // reuse the carousel sequence counter
+
+    // Same data the carousel feeds the lightbox — identical preview experience.
+    const lightboxSlides = toLightboxSlides(list);
+
+    const wrapper = el("div", {class: "gallery-block"});
+
+    if (name) {
+        wrapper.appendChild(el("h3", {class: "gallery__name", id: `${uid}-name`}, name));
+    }
+    if (blurb) {
+        wrapper.appendChild(el("div", {class: "prose gallery__blurb"}, `<p>${blurb}</p>`));
+    }
+
+    const gridAttrs = {
+        class: "gallery__grid",
+        role: "list",
+        "aria-label": name || `Galéria, ${list.length} obrázkov`,
+    };
+    const cols = Number(block.columns);
+    if (cols === 2 || cols === 3 || cols === 4) {
+        gridAttrs["data-columns"] = String(cols);
+    }
+    const grid = el("div", gridAttrs);
+
+    list.forEach((s, i) => {
+        const altText = s.title || s.caption || `Obrázok ${i + 1}`;
+
+        // Each tile is a real button → focusable + keyboard-openable, exactly
+        // like the carousel's .carousel__expand trigger.
+        const trigger = el("button", {
+            type: "button",
+            class: "gallery__item",
+            role: "listitem",
+            "aria-label": `Zväčšiť obrázok: ${altText}`,
+        });
+
+        const img = el("img", {
+            class: "gallery__img",
+            src: s.src,
+            alt: escapeAttr(altText),
+            loading: i < 4 ? "eager" : "lazy", // first row eager, rest lazy
+            decoding: "async",
+        });
+
+        img.addEventListener("error", () => {
+            img.classList.add("is-broken"); // silent fail, like .carousel__img
+        });
+
+        trigger.appendChild(img);
+
+        // Optional caption strip under the tile (only if the image has text).
+        if (s.title || s.caption) {
+            const cap = el("span", {class: "gallery__caption"});
+            if (s.title) cap.appendChild(el("span", {class: "gallery__title"}, s.title));
+            if (s.caption) cap.appendChild(el("span", {class: "gallery__text"}, s.caption));
+            trigger.appendChild(cap);
+        }
+
+        // Tap a tile → open the shared lightbox at that index.
+        trigger.addEventListener("click", () => getLightbox().open(lightboxSlides, i));
+
+        grid.appendChild(trigger);
+    });
+
+    wrapper.appendChild(grid);
+    return wrapper;
+}
+
+function buildPhoto(block) {
+    if (!block || !block.src) return null;
+    return buildGallery({
+        name: block.name,
+        blurb: block.blurb,
+        images: [{src: block.src, title: block.title, caption: block.caption, text: block.text}],
+    });
+}
+
+/* ----------------------------------------------------------------------
    2D. BLOCK DISPATCH
 ---------------------------------------------------------------------- */
 
@@ -720,6 +831,8 @@ const BLOCK_RENDERERS = {
     map: buildMap,
     slideshow: buildCarousel,
     table: buildTable,
+    gallery: buildGallery,
+    photo: buildPhoto,
 };
 
 const BLOCK_WIDTHS = {
@@ -730,6 +843,8 @@ const BLOCK_WIDTHS = {
     slideshow: "wide",
     map: "wide",
     table: "wide",
+    gallery: "wide",
+    photo: "wide",
 };
 
 function widthFor(block) {

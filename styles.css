@@ -1439,6 +1439,130 @@ a.card__link:not(:has(.card__meta)):hover::after {
     }
 }
 
+/* ---- Gallery (image grid) --------------------------------------------- */
+/* Rendered by buildGallery() in engine.js. Sibling to the carousel: same theme
+   tokens, same shared lightbox (getLightbox), but a scannable grid of tiles
+   instead of one paged frame. A `gallery` block shows all images at once;
+   clicking any tile opens the lightbox at that image. A `photo` block is a
+   one-image gallery. */
+
+/* Optional name/blurb above the grid — mirrors the carousel's. */
+.gallery__name {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
+
+.gallery__blurb {
+    margin: 0 0 0.75rem;
+}
+
+.gallery__grid {
+    display: grid;
+    /* Auto-fit tiles; min tile ~13rem, never overflowing a narrow screen. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: 0.75rem;
+}
+
+/* Optional hard column hints (data-columns="2|3|4"); still collapse on narrow
+   viewports via the media query below. */
+.gallery__grid[data-columns="2"] { grid-template-columns: repeat(2, 1fr); }
+.gallery__grid[data-columns="3"] { grid-template-columns: repeat(3, 1fr); }
+.gallery__grid[data-columns="4"] { grid-template-columns: repeat(4, 1fr); }
+
+/* Each tile is a button so it's focusable/keyboard-openable. Strip button
+   chrome; the image fills it. zoom-in cursor signals it opens the lightbox —
+   same affordance language as .carousel__expand. */
+.gallery__item {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-panel);
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    backdrop-filter: blur(var(--panel-blur));
+    cursor: zoom-in;
+    transition: transform var(--transition), border-color var(--transition);
+}
+
+.gallery__item:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+
+.gallery__item:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.gallery__item:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Square tile. object-fit: cover crops uniformly so a ragged set of photo
+   dimensions still reads as a tidy grid (same trick as .carousel__img). */
+.gallery__img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    min-height: 0;
+}
+
+/* Broken image: hide the glyph, let the panel show through (silent fail,
+   matches .carousel__img.is-broken). */
+.gallery__img.is-broken {
+    visibility: hidden;
+}
+
+/* Optional per-tile caption strip. Clamped so a long caption can't make one
+   tile taller than its neighbors and break the grid rhythm. */
+.gallery__caption {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0.7rem;
+    text-align: left;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+}
+
+.gallery__title {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.2;
+    color: var(--text);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+}
+
+.gallery__text {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: var(--text-soft);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+/* Narrow screens: relax forced column counts to two so tiles stay tappable. */
+@media (max-width: 640px) {
+    .gallery__grid[data-columns="3"],
+    .gallery__grid[data-columns="4"] {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 /* Touch browsers often keep :hover stuck after a tap, especially mobile Firefox.
    Keep hover polish on desktop, but neutralize sticky hover state on touch.
 
@@ -1521,6 +1645,12 @@ a.card__link:not(:has(.card__meta)):hover::after {
 
     .carousel__dot.is-active:hover {
         background: var(--on-image-text);
+    }
+
+    /* Gallery: drop the sticky hover lift on touch (matches carousel/cards). */
+    .gallery__item:hover {
+        transform: none;
+        border-color: var(--border);
     }
 }
 

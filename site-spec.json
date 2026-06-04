@@ -26,7 +26,7 @@
           "width": "wide",
           "eyebrow": "RustCust — cyklodielňa",
           "title": "Servis bicyklov a lyží, custom úpravy a guiding v <em>Rajci</em>.",
-          "lead": "Bla bla bla nejaky text"
+          "lead": "Work in progress web"
         },
         {
           "type": "text",
@@ -415,6 +415,32 @@
             }
           ]
         }
+
+      ]
+    },
+    {
+      "id": "galeria",
+      "label": "Galéria",
+      "title": "Galéria.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Výber z dielne, hotových projektov a výjazdov. (tu rozhoduje Kvalita > Kvantita fotiek, cisto nejaky namakany vyber)"
+        },
+        {
+          "type": "gallery",
+          "name": "Moja práca",
+          "blurb": "Klikni na obrázok pre zväčšenie.",
+          "columns": 3,
+          "images": [
+            { "src": "assets/slides/mr_fix.jpg",   "title": "Servis",  "caption": "Diagnostika a nastavenie" },
+            { "src": "assets/slides/mr_clean.jpg",  "title": "Cyklohygiena", "caption": "Čistenie pohonu" },
+            { "src": "assets/slides/custom.jpeg",   "title": "Custom",  "caption": "BMX prestavba" },
+            { "src": "assets/slides/custom_2.jpeg", "title": "Detail",  "caption": "Custom lakovanie" },
+            { "src": "assets/slides/ride.jpg",      "title": "Guiding", "caption": "Lokálne trasy" },
+            { "src": "assets/slides/peugeot.jpg" }
+          ]
+        }
       ]
     },
     {
@@ -424,7 +450,7 @@
       "blocks": [
         {
           "type": "text",
-          "text": "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme."
+          "text": "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme. (Tu funguju prekliky na kontakty)"
         },
         {
           "type": "links",
@@ -477,6 +503,7 @@
         }
       ]
     }
+
   ],
   "footer": {
     "note": "Made by <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Mišo</a>"
