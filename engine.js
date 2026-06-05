@@ -32,11 +32,6 @@ import {initSkull} from "./animation/skull/skull.js";
      "backgrounds": [ "assets/background/bg.jpg", ... ]
    }
 
-   BLOCK WIDTH
-   -----------
-   Each block sits in a width tier set automatically by type (see BLOCK_WIDTHS).
-   Override per block with "width": "narrow" | "wide".
-
    BLOCK TYPES (each block is an object with a "type"):
      { "type": "hero", "eyebrow", "title", "lead" }
      { "type": "text", "text": "Paragraph. Inline <em>…</em> and <a …> ok." }
@@ -835,24 +830,6 @@ const BLOCK_RENDERERS = {
     photo: buildPhoto,
 };
 
-const BLOCK_WIDTHS = {
-    hero: "wide",
-    text: "wide",
-    links: "wide",
-    cards: "wide",
-    slideshow: "wide",
-    map: "wide",
-    table: "wide",
-    gallery: "wide",
-    photo: "wide",
-};
-
-function widthFor(block) {
-    const w = block && block.width;
-    if (w === "narrow" || w === "wide") return w; // explicit override wins.
-    return BLOCK_WIDTHS[block && block.type] || "wide";
-}
-
 function renderBlock(block) {
     if (!block || !block.type) return null;
 
@@ -965,7 +942,7 @@ function buildSection(section) {
         const rendered = renderBlock(block);
         if (!rendered) return;
 
-        const wrap = el("div", {class: `block block--${widthFor(block)}`});
+        const wrap = el("div", {class: "block"});
         wrap.appendChild(rendered);
         node.appendChild(wrap);
     });
@@ -1571,7 +1548,7 @@ function renderErrorState(reason) {
     if (main) {
         main.innerHTML = "";
 
-        const wrap = el("div", {class: "block block--wide"});
+        const wrap = el("div", {class: "block"});
         const box = el("div", {class: "error-state", role: "alert"});
 
         box.appendChild(el("h1", {class: "error-state__title"}, "Stránka je dočasne nedostupná"));

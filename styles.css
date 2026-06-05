@@ -11,15 +11,9 @@
     /* Brand wordmark only: kept as the original serif. */
     --font-brand: "Dancing Script", "Instrument Serif", Georgia, "Times New Roman", serif;
 
-    /* Content width tiers. Blocks sit in one of these two columns:
-       narrow keeps prose readable; wide gives visual blocks (cards, slideshow,
-       map, table) a little more room. The page gutter still applies, so on
-       small screens both collapse to the available width. */
-    --content-narrow: 46rem;
-    --content-wide: 56rem;
-
-    /* Back-compat alias: some rules / older edits referenced --max-width. */
-    --max-width: var(--content-narrow);
+    /* Single content column width. Blocks fill it; the page gutter keeps them
+       off the screen edges on small viewports. */
+    --content-width: 56rem;
 
     /* Uniform vertical rhythm between consecutive blocks in a section. */
     --block-gap: 1.5rem;
@@ -684,12 +678,11 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 }
 
 /* ---- Content ---------------------------------------------------------- */
-/* The content column is sized to the WIDE tier; narrow blocks center a
-   smaller column inside it (see .block--narrow). This way wide blocks fill
-   the column and narrow blocks sit centered within the same gutters. */
+/* The content column is the single site width; blocks fill it and the gutter
+   keeps them off the edges on small screens. */
 .content {
     width: 100%;
-    max-width: var(--content-wide);
+    max-width: var(--content-width);
     margin: 0 auto;
     padding: clamp(2rem, 6vw, 3rem) var(--gutter) 3rem;
     outline: none;
@@ -730,27 +723,15 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     }
 }
 
-/* ---- Block layout: width tiers + uniform spacing ---------------------- */
-/* Every rendered block is wrapped by JS in a .block element carrying a width
-   tier. This is the single source of truth for (a) how wide each block is and
-   (b) the vertical rhythm between blocks. Adding a new block type needs no new
-   spacing CSS — it inherits .block + .block automatically.
-
-   narrow = readable prose column; wide = visual blocks given more room. Both
-   are centered inside the content column. On small screens the gutter makes
-   them collapse to the same available width, so the tiers only diverge once
-   there's room. */
+/* ---- Block layout: uniform spacing ----------------------------------- */
+/* Every rendered block is wrapped by JS in a .block element. This is the
+   single source of truth for the vertical rhythm between blocks. Adding a new
+   block type needs no new spacing CSS — it inherits .block + .block. Blocks
+   fill the content column; control a block's own width inside its builder/CSS
+   if it ever needs to be narrower. */
 .block {
     width: 100%;
     margin-inline: auto;
-}
-
-.block--narrow {
-    max-width: var(--content-narrow);
-}
-
-.block--wide {
-    max-width: var(--content-wide);
 }
 
 /* Uniform gap between consecutive blocks. Replaces the old per-pair adjacency

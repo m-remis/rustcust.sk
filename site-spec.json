@@ -23,14 +23,12 @@
       "blocks": [
         {
           "type": "hero",
-          "width": "wide",
           "eyebrow": "RustCust — cyklodielňa",
           "title": "Servis bicyklov a lyží, custom úpravy a guiding v <em>Rajci</em>.",
           "lead": "Work in progress web"
         },
         {
           "type": "text",
-          "width": "wide",
           "text": "RustCust je malá cyklodielňa v Rajci. Namiesto anonymného servisu ponúka osobný prístup, praktické riešenia a prácu, ktorú je vidieť na výsledku."
         },
         {
@@ -415,7 +413,6 @@
             }
           ]
         }
-
       ]
     },
     {
@@ -433,12 +430,36 @@
           "blurb": "Klikni na obrázok pre zväčšenie.",
           "columns": 3,
           "images": [
-            { "src": "assets/slides/mr_fix.jpg",   "title": "Servis",  "caption": "Diagnostika a nastavenie" },
-            { "src": "assets/slides/mr_clean.jpg",  "title": "Cyklohygiena", "caption": "Čistenie pohonu" },
-            { "src": "assets/slides/custom.jpeg",   "title": "Custom",  "caption": "BMX prestavba" },
-            { "src": "assets/slides/custom_2.jpeg", "title": "Detail",  "caption": "Custom lakovanie" },
-            { "src": "assets/slides/ride.jpg",      "title": "Guiding", "caption": "Lokálne trasy" },
-            { "src": "assets/slides/peugeot.jpg" }
+            {
+              "src": "assets/slides/mr_fix.jpg",
+              "title": "Servis",
+              "caption": "Diagnostika a nastavenie"
+            },
+            {
+              "src": "assets/slides/mr_clean.jpg",
+              "title": "Cyklohygiena",
+              "caption": "Čistenie pohonu"
+            },
+            {
+              "src": "assets/slides/custom.jpeg",
+              "title": "Custom",
+              "caption": "BMX prestavba"
+            },
+            {
+              "src": "assets/slides/custom_2.jpeg",
+              "title": "Detail",
+              "caption": "Custom lakovanie"
+            },
+            {
+              "src": "assets/slides/ride.jpg",
+              "title": "Guiding",
+              "caption": "Lokálne trasy"
+            },
+            {
+              "src": "assets/slides/peugeot.jpg",
+              "title": "Retro prestavba",
+              "caption": "Absolutne namakaný peugeot"
+            }
           ]
         }
       ]
@@ -503,7 +524,6 @@
         }
       ]
     }
-
   ],
   "footer": {
     "note": "Made by <a href=\"https://michal-remis.com/?utm_campaign=visitor_origin&utm_source=rustcust.sk/\" target=\"_blank\" rel=\"noopener noreferrer\">Mišo</a>"

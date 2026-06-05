@@ -36,13 +36,25 @@ Design constraints, all intentional:
 From the project root:
 
 ```bash
-node launch-check.js            # human-readable report
-node launch-check.js --json     # machine-readable JSON (for CI/tooling)
-node launch-check.js --help     # usage
+node launch-check.js                 # human-readable report
+node launch-check.js --json          # machine-readable JSON (for CI/tooling)
+node launch-check.js --strict        # treat warnings as blocking failures too
+node launch-check.js --help          # usage
 ```
 
-It must be run **from the repo root** — it inspects the current working
-directory.
+Other flags (all optional):
+
+```text
+--root <dir>            Check another folder instead of the cwd.
+--site-spec <file>      Use a different spec file. Default: site-spec.json
+--no-unused-assets      Don't warn about unreferenced files under assets/.
+--max-image-kb <n>      Warn when an image asset exceeds n KB. Default: 900
+--max-css-kb <n>        Warn when a CSS file exceeds n KB. Default: 250
+--max-js-kb <n>         Warn when a JS file exceeds n KB. Default: 250
+```
+
+It must be run **from the repo root** (or pointed at a folder with `--root`) —
+it inspects files on disk relative to that root.
 
 ### Exit codes
 
@@ -51,7 +63,9 @@ directory.
 1  fail — blocking errors found
 ```
 
-Warnings never affect the exit code. Only errors block.
+Warnings never affect the exit code by default. Only errors block — **unless**
+you pass `--strict`, which promotes warnings to blocking failures (a useful
+hard gate in CI).
 
 ### Output modes
 
@@ -83,10 +97,15 @@ Warnings:
   "status": "fail",
   "ok": false,
   "counts": { "errors": 8, "warnings": 4 },
-  "errors":   [ { "category": "content", "message": "…" }, … ],
-  "warnings": [ { "category": "assets",  "message": "…" }, … ]
+  "errors":   [ { "category": "content", "code": "EMAIL_FAKE", "message": "…" }, … ],
+  "warnings": [ { "category": "assets",  "code": "UNUSED_ASSET", "message": "…" }, … ]
 }
 ```
+
+Each finding carries a stable `category`, a stable machine `code` (e.g.
+`EMAIL_FAKE`, `MANIFEST_ICON_WRONG_PATH`, `UNUSED_ASSET`), and a human
+`message`. The `code` is the thing to match on in tooling — the message wording
+may change, the code won't.
 
 `status`/`ok` give a quick branch, `counts` supports thresholds, and the arrays
 carry the detail. The exit code matches the status in both modes, so CI can
@@ -124,11 +143,15 @@ Fails if any are missing: `index.html`, `styles.css`, `site-spec.json`,
   no duplicate ids; `label` present (warning if not). Note `type` lives on
   **blocks**, not sections.
 - **Block types** — each block's `type` must be one the engine knows
-  (`hero, text, cards, links, map, slideshow, table`). An unknown type is
-  flagged because the engine silently skips it.
+  (`hero, text, cards, links, map, slideshow, table, gallery, photo`). An
+  unknown type is flagged because the engine silently skips it. The known list
+  is `BLOCK_RULES` near the top of `launch-check.js` — keep it in sync with
+  `BLOCK_RENDERERS` in `engine.js` when you add a block type.
 - **Block required fields** — `table` needs `headings` + `rows`; `cards` and
-  `links` need `items`; `slideshow` needs `slides`; `map` needs `url` or
-  `embed`; etc. (a builder returns nothing on bad input, so these would vanish).
+  `links` need `items`; `slideshow` needs `slides`; `gallery` needs `images`
+  (and `columns`, if set, must be 1–6); `photo` needs `src`; `map` needs `url`
+  or `embed`; etc. (a builder returns nothing on bad input, so these would
+  vanish).
 - **Placeholder text** — scans every string for filler markers (`lorem`,
   `bla bla`, `nejaky`, `tbd`, `placeholder`, …) and reports the JSON path.
 - **Contact data** — emails (fake/invalid patterns like `r@r.sk`), phones (too
@@ -136,7 +159,9 @@ Fails if any are missing: `index.html`, `styles.css`, `site-spec.json`,
   when present.
 - **Content quality** (warnings) — very short hero lead; a pricing-looking
   section with no price-like content.
-- **Image alt** (warning) — slideshow slides with no title/caption/alt.
+- **Image alt / accessibility** (errors in the `accessibility` category) —
+  slideshow slides, gallery images, and photos with no `title`/`caption`/`text`
+  to derive alt text from.
 
 ### `index.html`
 
@@ -180,7 +205,10 @@ Fails if any are missing: `index.html`, `styles.css`, `site-spec.json`,
 
 - **Referenced-but-missing** (error) — a block points at a file that isn't there.
 - **Present-but-unused** (warning) — a file on disk nothing references. The
-  favicon family is exempt (referenced by convention).
+  favicon family and `animation/` are exempt (referenced by convention).
+- **Oversized images** (warning, `performance` category) — images larger than
+  `--max-image-kb` (default 900 KB), and CSS/JS over `--max-css-kb` /
+  `--max-js-kb` (default 250 KB), so heavy media gets compressed before ship.
 
 ## How to use it in the workflow
 
@@ -228,15 +256,16 @@ the `errors`/`warnings` arrays (tagged with a category) → print → exit on
    `warn(category, msg)`.
 2. Call it from `main()`.
 3. Reuse the existing category names where they fit (`missing`, `spec`,
-   `content`, `seo`, `manifest`, `assets`, `accessibility`) rather than
-   inventing new ones.
+   `content`, `links`, `seo`, `manifest`, `assets`, `accessibility`,
+   `performance`) rather than inventing new ones, and give the finding a stable
+   uppercase `code`.
 
 Keep it dependency-free, offline, and CommonJS. If a check would need a parser,
 a network call, or an npm package, it probably doesn't belong here — that's the
 line that keeps this a fast preflight rather than a slow test suite.
 
-Possible future additions (not yet built): a `--strict` flag that turns
-warnings into blocking errors (useful as a hard CI gate), and well-formed-XML
-validation for `sitemap.xml`.
+Possible future additions (not yet built): well-formed-XML validation for
+`sitemap.xml` (currently regex-scraped), and live-URL / deployed-header checks
+(deliberately out of scope today to keep the run offline and fast).
 
 <!-- Built from m-remis/static-web-template -->

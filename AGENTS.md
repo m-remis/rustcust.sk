@@ -18,6 +18,9 @@ Pick the doc that matches your task — don't guess from filenames:
 - **Checking a site is safe to ship** → run `node launch-check.js`; details in
   `LAUNCH-CHECK.md`.
 
+Once you know the task, read its row in **"Workflows"** (right below) before
+editing — it lists every file the change obligates, not just the obvious one.
+
 **Hard rules (do not violate):**
 1. No build step, no framework, no bundler, no npm dependency for the runtime
    site. Vanilla HTML/CSS/JS served as files.
@@ -27,6 +30,165 @@ Pick the doc that matches your task — don't guess from filenames:
 4. After any change, validate: `node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"`,
    `node --check engine.js`, then `node launch-check.js`. Make the smallest
    change that satisfies the request; don't reformat unrelated code.
+
+## Workflows (what a change obligates)
+
+Most mistakes here are not wrong edits — they are *incomplete* ones: the code
+changes but a doc, a mirror file, or the validator is left describing the old
+world. This section maps each kind of task to the **full** set of edits it
+requires, so a change lands consistent instead of drifting.
+
+The rule of thumb: **if you change a fact, change every place that states it.**
+A block type is stated in four places; a domain in five; a color in five. Pick
+your task below and do the whole row, not just the first cell.
+
+| If you're changing… | Go to workflow |
+|---|---|
+| site text, tabs, contact, prices, images, socials | **A — Content edit** |
+| adding/removing/renaming a block *type* | **B — New block type** |
+| a builder's accepted fields (no new type) | **C — Block fields change** |
+| colors / theme tokens | **D — Theme/color edit** |
+| domain, title, description, OG, metadata | **E — Metadata/domain edit** |
+| a `launch-check.js` rule or category | **F — Validator change** |
+| any engine behavior (tabs, menu, header-fit, …) | **G — Behavior change** |
+
+Every workflow ends with the same gate: run the three validators from Hard Rule
+4 and reach `launch-check` `PASS` (or only-expected warnings).
+
+### Workflow A — Content edit (the 90% case)
+
+**Trigger:** change what the site *says* — copy, a tab, a price row, a contact
+handle, a slideshow image, a social link.
+
+1. Edit `site-spec.json` only. Nothing in `engine.js`/`styles.css`/`index.html`
+   should need to move for a pure content change.
+2. If you added a social platform that isn't in `SOCIAL_ICONS` yet, that's not
+   content — switch to **Workflow B**'s icon note.
+
+**Ripple — also update:** usually nothing. Content lives in one file by design.
+**Done when:** JSON parses, `launch-check` passes, the affected tab renders.
+
+### Workflow B — Adding (or removing/renaming) a block *type*
+
+**Trigger:** a genuinely new *kind* of content (e.g. `hours`, `faq`, `cta`), or
+removing/renaming an existing type. This is the one content task that is real
+code, and it touches **four places that must agree**.
+
+> **Start from the skeleton:** `_block-template.md` has all four pieces
+> (builder, CSS, validator stub, spec example) pre-written to the house style —
+> copy it and rename `example` → your type rather than hand-writing from
+> scratch. The steps below are what that template fills in.
+
+1. **Engine:** write `buildX(block)` in `engine.js` (pure DOM builder — reads
+   only its `block` arg, never `SITE`), and add `yourtype: buildX` to the
+   `BLOCK_RENDERERS` map.
+2. **Styles:** add the block's CSS in `styles.css`, themed via existing tokens.
+3. **Engine docs (in-file):** add the block's shape to the `BLOCK TYPES` comment
+   at the top of `engine.js`.
+4. **Validator:** add the type to `BLOCK_RULES` in `launch-check.js` (and a
+   `checkXBlock()` for its required fields if it has any). **Skipping this makes
+   `launch-check` falsely flag every use of the new type as unknown.**
+5. **AGENTS.md:** add a row to the block-types table (section "Block types and
+   their builders") and, if it's a notable function, the "Key functions" list.
+6. **CLIENT-CHECKLIST.md:** if the type is something clients will commonly fill
+   in, add it to the §1c per-block list.
+
+**Ripple checklist — a new block type is not done until:** `BLOCK_RENDERERS`,
+`BLOCK_RULES`, the `engine.js` `BLOCK TYPES` comment, and the AGENTS.md table
+**all** list it. (Removing a type: delete from the same four places, and grep
+`site-spec.json` so no section still uses it.)
+**Done when:** the four lists agree, `node --check engine.js` passes, a test
+block of the new type renders, and `launch-check` doesn't warn "unknown type".
+
+### Workflow C — Changing a block's accepted fields (no new type)
+
+**Trigger:** a builder starts accepting a new field, or stops accepting one
+(e.g. `gallery` gains a `columns` option).
+
+1. **Engine:** change `buildX()` to read the field.
+2. **Engine docs:** update that block's line in the `BLOCK TYPES` comment.
+3. **Validator:** if the field is required, or has a constraint (range, enum),
+   reflect it in the block's `checkXBlock()` in `launch-check.js`.
+4. **AGENTS.md / CLIENT-CHECKLIST.md:** update the block's documented shape if
+   the field is author-facing.
+
+**Done when:** the `BLOCK TYPES` comment and any validator rule match the
+builder's real behavior.
+
+### Workflow D — Theme / color edit
+
+**Trigger:** changing a color, especially `--bg-base`, or adding a token.
+
+1. **Add to both theme blocks.** A new color is a named variable added under
+   **both** `[data-theme="dark"]` and `[data-theme="light"]` in `styles.css` —
+   never an inline hex in a rule. (Exception: per-platform social brand colors,
+   which are intentionally identical across themes and live as their own rules.)
+2. **If you changed dark `--bg-base`,** update its mirrors: `index.html`
+   `theme-color`, `404.html` `theme-color`, `site.webmanifest` `theme_color`
+   **and** `background_color`, and `meta.themeColor` in `site-spec.json`.
+
+**Ripple — dark `--bg-base` is stated in 5 places.** Change them together.
+**Done when:** light + dark both read correctly, the 404 page re-themes, and the
+browser chrome color matches in both themes.
+
+### Workflow E — Metadata / domain edit
+
+**Trigger:** changing the domain, title, description, OG fields, or canonical.
+
+1. **`site-spec.json` → `meta` is the source of truth.** Edit it there first;
+   `renderHead()` drives the live `<head>` from it.
+2. **Mirror the static fallback in `index.html`** (title, description, author,
+   og:*, canonical) — crawlers that don't run JS read these.
+3. **If the domain changed,** also update `sitemap.xml` `<loc>`, `robots.txt`
+   `Sitemap:`, the `index.html` canonical + `og:url`, and `CNAME` if present.
+
+**Ripple — the domain is stated in ~5 places, and `launch-check` cross-checks
+them.** A mismatch is a hard failure, which is the safety net here.
+**Done when:** `launch-check` reports no domain/metadata mismatch.
+
+### Workflow F — Validator change (`launch-check.js`)
+
+**Trigger:** adding/changing a check, a category, a flag, or an error code.
+
+1. **Code:** add the `checkX()` and call it from `main()`; reuse an existing
+   category (`missing, spec, content, links, seo, manifest, assets,
+   accessibility, performance`) and give the finding a stable uppercase `code`.
+2. **Docs:** update `LAUNCH-CHECK.md` — the "What it checks" list, and the
+   category/flag/code references if you touched those.
+3. **Keep it dependency-free, offline, CommonJS.** If a check needs a parser,
+   network, or npm package, it doesn't belong here.
+
+**Ripple:** a new category or flag must appear in `LAUNCH-CHECK.md`, not just
+the code. **Done when:** the script runs, and its docs describe what it now does.
+
+### Workflow G — Behavior change (engine internals)
+
+**Trigger:** changing tabs, theme, mobile menu, header-fit, background,
+lightbox, scroll handling, etc.
+
+1. **Edit the relevant `init*`/`build*` function in `engine.js`.**
+2. **Check the "Constraints / gotchas" section** before touching scroll
+   handling, header-fit, or the mobile drawer — several behaviors are load-
+   bearing and look like dead code (e.g. the `forceTop` scroll re-assertion).
+   If you change one, update its gotcha note so the next agent knows why.
+3. **Update "Key functions in `engine.js`"** if you add/rename/remove a function
+   or change what it does.
+4. **Run the manual checks in "How to verify a change"** — behavior changes are
+   exactly what `launch-check` *can't* catch (it validates the spec, not the
+   rendered result).
+
+**Done when:** the relevant manual checks pass and any gotcha/function doc you
+invalidated is updated.
+
+### The drift rule (why this section exists)
+
+This engine has already drifted once: the code grew `gallery`, `photo`, and
+`meta.analytics` while the docs and validator still described the older,
+smaller world. The block-type list living in four places is the canonical
+example — treat "I changed a fact in one place" as a prompt to grep for the
+others. When in doubt, `grep -rn "<the thing>" --exclude-dir=.git .` and fix
+every hit that states the old value.
+
 
 ## What this project is
 
@@ -114,6 +276,7 @@ runtime. Before editing markup or CSS, check whether the request is actually a
 | `animation/skull/`                              | Header mascot: `skull.js` (ES module), `skull.css`, `assets/` | mascot behavior/art                |
 | `CLIENT-CHECKLIST.md`                           | Per-client replacement + deploy checklist                     | client-site handoff rules          |
 | `launch-check.js` / `LAUNCH-CHECK.md`           | Pre-launch validator (dev-only, never served) + its docs      | before shipping; adding a block type|
+| `_block-template.md`                            | Copyable skeleton for a new block type (not served)           | adding a block type (Workflow B)   |
 | `site.webmanifest`, `sitemap.xml`, `robots.txt` | PWA + SEO                                                     | domain/name changes                |
 | `assets/`                                       | favicon, `background/` images, `slides/` images               | swapping media                     |
 
@@ -153,7 +316,12 @@ and show the error screen — serve locally with `python3 -m http.server 8000`.
     "themeColor": "#0e0f13",
     "ogType": "website",
     "ogImage": "assets/social/og-image.jpg", // optional; og:image only emitted if present
-    "twitterCard": "summary"
+    "twitterCard": "summary",
+    "analytics": {           // optional; drives the footer visitor count only
+      "countUrl": "https://<site>.goatcounter.com/counter/TOTAL.json",
+      "countLabel": "návštev",        // optional suffix after the number
+      "dashboardUrl": "https://<site>.goatcounter.com"  // optional; makes the count a link
+    }
   },
   "sections": [               // ORDERED — order IS the nav order AND the page order
     {
@@ -195,8 +363,7 @@ is an ordered list of typed content blocks rendered by a generic dispatch.
 `renderContent()` iterates the sections (via `getSections()`) and calls
 `buildSection(section)` for each. `buildSection()` renders the optional
 `<h2 class="section__title">`, then for each block calls `renderBlock(block)`
-and wraps the result in a width-tier container
-(`<div class="block block--narrow|--wide">`).
+and wraps the result in a `<div class="block">`.
 
 ### Block types and their builders
 
@@ -214,6 +381,8 @@ only its `block` argument, never `SITE`) and returns a node, a fragment, or
 | `map`        | `buildMap`       | `mode: "embed"` live iframe, or `mode: "static"` themed address card     |
 | `slideshow`  | `buildCarousel`  | 1 slide = framed image; 2+ = carousel w/ prev/next, dots, ARIA, lightbox |
 | `table`      | `buildTable`     | structured table (price list etc.); last column accent-styled            |
+| `gallery`    | `buildGallery`   | responsive image grid (opt. `columns` 1–6); shares the slideshow lightbox|
+| `photo`      | `buildPhoto`     | single-image sugar; normalizes to a one-image `gallery`                  |
 
 The exact block shapes are documented in the long comment at the top of
 `engine.js` (the `BLOCK TYPES` section). Keep that comment in sync if you change
@@ -222,32 +391,30 @@ the section — a section never has a `type`.
 
 ### Adding a NEW block type
 
-This is the only "new section kind" work, and it is small:
+Adding a new *kind* of content (e.g. `hours`, `faq`, `cta`) is the only content
+task that is real code, and it touches four places that must stay in agreement
+(engine renderer, validator rules, the `BLOCK TYPES` comment, and the table
+below). The full step-by-step — including the ripple checklist that keeps those
+four in sync — is **Workflow B** in the "Workflows" section near the top of this
+file, and `_block-template.md` is the copyable skeleton to start from. Follow
+them rather than ad-hoc editing.
 
-1. Write `buildX(block)` in `engine.js`, returning a DOM node (or `null`/
-   fragment). Keep it pure — no `SITE` access; read only the `block` argument.
-2. Add `yourtype: buildX` to the `BLOCK_RENDERERS` map.
-3. Optionally add a default width in `BLOCK_WIDTHS` (defaults to `wide`).
-4. Add the matching CSS in `styles.css`.
-5. Document the block's accepted fields in the top-of-file `BLOCK TYPES` comment.
-6. Use `{ "type": "yourtype", … }` in any section's `blocks` in `site-spec.json`.
+Engine behavior worth knowing while you do: unknown block types are skipped with
+a `console.warn`, not thrown — a typo never blanks the page. Once built, a block
+is reusable across all future clients; growing a tested block library is the real
+product value.
 
-Unknown block types are skipped with a `console.warn`, not thrown — a typo never
-blanks the page. Once built, a block is reusable across all future clients;
-growing a tested block library is the real product value (see the refactor
-plan).
+### Block width
 
-### Width tiers
-
-Every block is wrapped in `.block--narrow` (≈46rem, readable prose column) or
-`.block--wide` (≈56rem, room for visuals). `widthFor(block)` resolves it: an
-explicit `width: "narrow" | "wide"` on the block wins; otherwise it falls back
-to `BLOCK_WIDTHS[type]`. **Note the current default:** every type in
-`BLOCK_WIDTHS` is set to `wide` so all blocks share one consistent left edge /
-column width across the site. The widths themselves are the CSS variables
-`--content-narrow` / `--content-wide`. Vertical rhythm between blocks is one
-rule: `.block + .block { margin-top: var(--block-gap); }`. Adding a block type
-needs no new spacing CSS.
+Every block is wrapped in a single `.block` element and fills the one content
+column (CSS variable `--content-width`, ≈56rem), centered with the page gutter
+holding it off the screen edges on small viewports. There are no width tiers and
+no per-block `width` field — all blocks share one consistent left edge across
+the site. Vertical rhythm between blocks is one rule:
+`.block + .block { margin-top: var(--block-gap); }`. Adding a block type needs no
+new spacing CSS. If a specific block ever needs to be narrower (e.g. a centered
+prose column), constrain it inside that block's own builder/CSS, not via a spec
+field.
 
 ## Theming (single source of truth)
 
@@ -301,8 +468,9 @@ colors live as standalone rules, identical in light and dark mode:
   missing/empty `sections` degrades to the empty/error state instead of throwing.
 - `navItems()` — derives the tab list from `getSections()` (id + label).
 - Builders: `buildHero`, `buildText`, `buildCards`, `buildLinks`, `buildMap`,
-  `buildTable`, `buildCarousel`, plus `buildSocials` (header/drawer socials).
-- Dispatch: `BLOCK_RENDERERS`, `BLOCK_WIDTHS`, `widthFor()`, `renderBlock()`,
+  `buildTable`, `buildCarousel` (slideshow), `buildGallery`, `buildPhoto`, plus
+  `buildSocials` (header/drawer socials).
+- Dispatch: `BLOCK_RENDERERS`, `renderBlock()`,
   `buildSection()`, `renderContent()`.
 - `renderHead()` — writes `<head>` metadata from `SITE.meta` (see above).
 - `renderNav()` — builds `.brand-wrap` (skull + brand + optional socials),
@@ -321,8 +489,13 @@ colors live as standalone rules, identical in light and dark mode:
   the left cluster and the nav would touch (see the header-fit gotcha below).
 - `initBackground()` — dual-layer crossfading background with Ken Burns drift
   (see the background section below).
-- `getLightbox()` — shared image-preview overlay reused by the slideshow (and
-  any future image block, e.g. a `gallery`).
+- `getLightbox()` — shared image-preview overlay reused by the slideshow, the
+  `gallery`, and `photo` (all feed it via `toLightboxSlides()`).
+- `renderFooter()` — `© year brand` + footer note, plus an optional visitor
+  count when `meta.analytics.countUrl` is set. `renderVisitorCount()` fetches
+  the GoatCounter-style JSON count best-effort (any failure leaves the footer
+  untouched, never throws). The actual *tracking* is the separate GoatCounter
+  `<script>` in `index.html`; this only displays the number.
 - Helpers: `$` (querySelector), `el()` (attribute-aware element builder; skips
   `null`/`false`/`undefined` attrs), `isExternalUrl()`, `escapeAttr()`.
 

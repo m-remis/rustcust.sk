@@ -1302,6 +1302,10 @@ function checkAssets(spec, html, referenced) {
                 const val = attrs[attrName];
                 if (!val) continue;
                 for (const ref of splitPossibleSrcset(val)) {
+                    // Protocol-relative URLs (//host/path) are remote, not local
+                    // assets — skip them so e.g. //gc.zgo.at/count.js isn't
+                    // mistaken for a missing repo file.
+                    if (ref.startsWith("//")) continue;
                     if (!isLocalReference(ref) && !ref.startsWith("/")) continue;
                     const clean = normalizeRef(ref);
                     if (!hasExtension(clean, LOCAL_ASSET_EXT)) continue;
