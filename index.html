@@ -56,7 +56,27 @@
     <div class="header-actions">
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme"
                 aria-pressed="false">
-            <span class="theme-toggle__icon" aria-hidden="true"></span>
+            <svg class="theme-toggle__icon" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+                <!-- One shape morphs between a crescent moon (dark) and a rayed sun (light).
+                     The bite is a mask circle that slides away in light mode; the rays
+                     fade in. All transitions are CSS, driven by [data-theme] on <body>. -->
+                <mask id="themeToggleMoonCut">
+                    <rect x="0" y="0" width="24" height="24" fill="#fff"/>
+                    <circle class="theme-toggle__cut" cx="18" cy="9" r="9" fill="#000"/>
+                </mask>
+                <circle class="theme-toggle__core" cx="12" cy="12" r="6"
+                        fill="currentColor" mask="url(#themeToggleMoonCut)"/>
+                <g class="theme-toggle__rays" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <line x1="12" y1="1" x2="12" y2="3.5"/>
+                    <line x1="12" y1="20.5" x2="12" y2="23"/>
+                    <line x1="1" y1="12" x2="3.5" y2="12"/>
+                    <line x1="20.5" y1="12" x2="23" y2="12"/>
+                    <line x1="4.2" y1="4.2" x2="5.9" y2="5.9"/>
+                    <line x1="18.1" y1="18.1" x2="19.8" y2="19.8"/>
+                    <line x1="4.2" y1="19.8" x2="5.9" y2="18.1"/>
+                    <line x1="18.1" y1="5.9" x2="19.8" y2="4.2"/>
+                </g>
+            </svg>
         </button>
 
         <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false"

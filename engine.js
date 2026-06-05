@@ -112,6 +112,112 @@ const el = (tag, attrs = {}, html = "") => {
 
 const isExternalUrl = (url = "") => /^https?:\/\//i.test(url);
 
+/* ----------------------------------------------------------------------
+   1B. SINGLE SOURCE OF TRUTH — business resolution
+
+   Contact + legal data lives in exactly one place: SITE.business. Blocks that
+   need a phone/email/social reference it by KEY instead of restating the
+   value, so a number is typed once in the whole spec. resolveRef() turns a
+   key ("phone", "email", or a social icon key) into a {label, handle, url,
+   icon} link descriptor, or null if the spec doesn't define it.
+---------------------------------------------------------------------- */
+
+function getBusiness() {
+    return SITE.business && typeof SITE.business === "object" ? SITE.business : {};
+}
+
+/* Strip spaces/formatting from a phone number to build a tel: href. */
+const telHref = (phone = "") => "tel:" + String(phone).replace(/[^\d+]/g, "");
+
+function resolveRef(key) {
+    const b = getBusiness();
+
+    if (key === "phone" && b.phone) {
+        return {label: b.phone, handle: "", url: telHref(b.phone), icon: "phone"};
+    }
+    if (key === "email" && b.email) {
+        return {label: b.email, handle: "", url: "mailto:" + b.email, icon: "email"};
+    }
+
+    // Otherwise treat the key as a social icon key and pull from socials[].
+    const social = (SITE.socials || []).find((s) => s && s.icon === key);
+    if (social) {
+        return {label: social.label, handle: "", url: social.url, icon: social.icon};
+    }
+
+    return null;
+}
+
+/* ----------------------------------------------------------------------
+   1C. SAFE INLINE HTML
+
+   Several blocks accept small inline HTML authored in the spec. As soon as
+   that text can come from an LLM or a client intake form, raw innerHTML is a
+   hole. sanitizeInline() keeps an allowlist of harmless inline tags and drops
+   everything else (scripts, event handlers, javascript: URLs). Use it on any
+   spec-authored rich text before it reaches innerHTML.
+---------------------------------------------------------------------- */
+
+const INLINE_ALLOWED = {
+    em: [], strong: [], b: [], i: [], br: [], span: [],
+    a: ["href", "title"],
+};
+
+function sanitizeInline(html = "") {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = String(html);
+
+    const walk = (node) => {
+        // Iterate over a static copy: we mutate the tree as we go.
+        Array.from(node.childNodes).forEach((child) => {
+            if (child.nodeType === Node.TEXT_NODE) return;
+            if (child.nodeType !== Node.ELEMENT_NODE) {
+                child.remove();
+                return;
+            }
+            const tag = child.tagName.toLowerCase();
+            const allowed = INLINE_ALLOWED[tag];
+            if (!allowed) {
+                // Disallowed element: keep its text, drop the wrapper.
+                child.replaceWith(...Array.from(child.childNodes));
+                return;
+            }
+            // Strip every attribute except the allowlisted ones.
+            Array.from(child.attributes).forEach((attr) => {
+                if (!allowed.includes(attr.name.toLowerCase())) child.removeAttribute(attr.name);
+            });
+            // Block javascript:/data: hrefs; force safe rel/target on links.
+            if (tag === "a") {
+                const href = child.getAttribute("href") || "";
+                if (/^\s*(javascript|data):/i.test(href)) child.removeAttribute("href");
+                if (isExternalUrl(href)) {
+                    child.setAttribute("target", "_blank");
+                    child.setAttribute("rel", "noopener noreferrer");
+                }
+            }
+            walk(child);
+        });
+    };
+
+    walk(tpl.content);
+    return tpl.innerHTML;
+}
+
+/* Render spec text honoring its declared `format`. Defaults to the sanitized
+   inline-HTML path (back-compatible with existing specs); "plain" escapes
+   everything; "markdown" handles a tiny inline subset then sanitizes. */
+function renderRichText(text = "", format = "html") {
+    if (format === "plain") return escapeAttr(text);
+    if (format === "markdown") {
+        const md = escapeAttr(text)
+            .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+            .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
+        return sanitizeInline(md);
+    }
+    return sanitizeInline(text);
+}
+
 /* The ordered list of sections, normalized + guarded. Every render path and
    the tab logic go through this, so a missing/empty `sections` array degrades
    to an empty site instead of throwing. Entries without an `id` are dropped
@@ -205,10 +311,12 @@ function buildHero(block) {
     return wrap;
 }
 
-/* text — a prose paragraph. Inline HTML (<em>, <a>) is allowed (trusted). */
+/* text — a prose paragraph. Inline HTML is sanitized to an allowlist; set
+   `format: "markdown"` for a small markdown subset or "plain" to escape all. */
 function buildText(block) {
     if (!block.text) return null;
-    return el("div", {class: "prose section__text"}, `<p>${block.text}</p>`);
+    const html = renderRichText(block.text, block.format);
+    return el("div", {class: "prose section__text"}, `<p>${html}</p>`);
 }
 
 /* cards — a responsive card grid. `linked: true` + an item `url` makes the
@@ -244,7 +352,12 @@ function buildCards(block) {
 
 /* links — the label/handle link list (e.g. contact rows). */
 function buildLinks(block) {
-    const items = block.items || [];
+    // Resolve `use: ["phone","email","instagram"]` against business/socials —
+    // the SSOT path — then append any explicit inline items after them.
+    const fromRefs = (block.use || [])
+        .map(resolveRef)
+        .filter(Boolean);
+    const items = fromRefs.concat(block.items || []);
     if (!items.length) return null;
 
     const ul = el("ul", {class: "link-list"});
@@ -283,8 +396,11 @@ function buildLinks(block) {
    - "static": a clean themed card with no iframe — the location name, an
      optional address line (only if `address` is set), and the button. */
 function buildMap(block) {
+    const b = getBusiness();
     const mode = block.mode === "static" ? "static" : "embed";
-    const href = block.url || block.embed;
+    // Fall back to the business-level map fields so the URL is typed once.
+    const embed = block.embed || b.mapEmbed;
+    const href = block.url || b.mapUrl || embed;
 
     // ---- Static card mode (no iframe) ----
     if (mode === "static") {
@@ -306,14 +422,14 @@ function buildMap(block) {
     }
 
     // ---- Embed mode (live iframe), the default ----
-    if (!block.embed) return null;
+    if (!embed) return null;
 
     const frag = document.createDocumentFragment();
 
     const wrap = el("div", {class: "map-embed"});
     wrap.appendChild(
         el("iframe", {
-            src: block.embed,
+            src: embed,
             title: block.label || "Location map",
             loading: "lazy",
             referrerpolicy: "no-referrer-when-downgrade",
@@ -326,7 +442,7 @@ function buildMap(block) {
         el(
             "p",
             {class: "map-open-row"},
-            `<a href="${href || block.embed}" target="_blank" rel="noopener noreferrer">Otvoriť mapy</a>`
+            `<a href="${href || embed}" target="_blank" rel="noopener noreferrer">Otvoriť mapy</a>`
         )
     );
 
@@ -1060,6 +1176,42 @@ async function renderVisitorCount(target, url, label) {
 }
 
 /* ----------------------------------------------------------------------
+   4A. RENDER THEME
+
+   Brand-defining design tokens live in SITE.theme so one engine can produce
+   differently-branded sites from config alone. This writes them as :root
+   custom properties at boot; styles.css holds the defaults, so any token the
+   spec omits simply keeps its CSS value. Structural CSS is NOT touched here —
+   only the brand knobs (accent, fonts, sizing, social tints).
+---------------------------------------------------------------------- */
+
+function renderTheme() {
+    const t = SITE.theme;
+    if (!t || typeof t !== "object") return;
+
+    const root = document.documentElement.style;
+    const setVar = (name, value) => {
+        if (value === undefined || value === null || value === "") return;
+        root.setProperty(name, String(value));
+    };
+
+    setVar("--accent", t.accent);
+    setVar("--root-scale", t.rootScale);
+    setVar("--content-width", t.contentWidth);
+    setVar("--radius", t.radius);
+    setVar("--font-sans", t.fontSans);
+    setVar("--font-serif", t.fontHeading);
+    setVar("--font-brand", t.fontBrand);
+
+    // Per-platform social brand tints, e.g. { instagram: "#e1306c" }.
+    if (t.socialColors && typeof t.socialColors === "object") {
+        Object.entries(t.socialColors).forEach(([key, color]) => {
+            setVar(`--brand-${key}`, color);
+        });
+    }
+}
+
+/* ----------------------------------------------------------------------
    4B. RENDER DOCUMENT HEAD
 
    Single source of truth for the page's metadata: everything here is driven
@@ -1632,6 +1784,10 @@ async function init() {
     // Done first so the metadata is correct even if we fall through to the
     // error screen below.
     renderHead();
+
+    // Apply brand design tokens from SITE.theme (before content paints, and
+    // before the error screen, so both are correctly branded).
+    renderTheme();
 
     // JSON is the single source of truth: render it, or show the error screen.
     // Three ways we end up with nothing to render:

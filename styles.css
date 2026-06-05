@@ -27,12 +27,9 @@
 
     --gutter: clamp(1.25rem, 4vw, 2.5rem);
     --radius: 8px;
-    --radius-sm: 10px;
+    --radius-sm: 8px;
 
     --transition: 220ms cubic-bezier(0.4, 0, 0.2, 1);
-
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.06),
-    0 8px 30px rgba(0, 0, 0, 0.08);
 
     /* Interaction tokens — theme-independent (same in light + dark).
        Keyboard focus ring (only shown after real keyboard nav) and the
@@ -42,9 +39,37 @@
     --press-scale: 0.94;
 
     --unicode-arrow: "\2192"; /* Unicode for → */
+
+    /* Theme-independent tokens — identical in light + dark, so defined once
+       here instead of duplicated in both [data-theme] blocks.
+
+       --brand-* : per-platform social/contact icon tints. renderTheme() can
+                   override these from SITE.theme.socialColors.
+       --on-image-* / --dot-* / --carousel-chip-* : controls that sit ON TOP of
+                   photos (lightbox, carousel dots/counter), so they stay
+                   dark-on-light in BOTH themes for legibility over any image. */
+    --panel-blur: 8px; /* frosted-glass radius; kept modest to ease scroll repaint cost */
+
+    --brand-instagram: #e1306c;
+    --brand-youtube: #ff0000;
+    --brand-phone: #2e9e4f;
+    --brand-email: #3b5bdb;
+
+    --on-image-text: #fff;
+    --on-image-btn-bg: rgba(0, 0, 0, 0.45);
+    --on-image-btn-bg-hover: rgba(0, 0, 0, 0.7);
+    --on-image-hairline: rgba(255, 255, 255, 0.25);
+    --on-image-veil: rgba(0, 0, 0, 0.88);
+
+    --dot-veil-bg: rgba(0, 0, 0, 0.35);
+    --dot-ring: rgba(255, 255, 255, 0.75);
+    --dot-fill-hover: rgba(255, 255, 255, 0.35);
+
+    --carousel-chip-text: #f4f5f8;
 }
 
-/* Dark (default) */
+/* Dark (default) — only tokens that DIFFER from light live here. Shared,
+   theme-independent tokens (brand/on-image/dot/chip/panel-blur) are in :root. */
 [data-theme="dark"] {
     /* — Backgrounds — */
     --bg-base: #0e0f13; /* page background */
@@ -53,54 +78,28 @@
 
     /* — Text — */
     --text: #ecedf1; /* headings + body */
-    --text-soft: #a6a9b4; /* secondary / lead text */
+    --text-soft: #d1d1d1; /* secondary / lead text */
     --text-faint: #6f7280; /* footer / captions */
 
     /* — Menu / nav — */
     --menu-text: #a6a9b4; /* idle nav link */
     --menu-text-active: #ecedf1; /* hovered / active nav link */
-    --menu-hover-bg: rgba(138, 180, 255, 0.14); /* hover pill behind link */
+    --menu-hover-bg: var(--accent-soft); /* hover pill behind link */
 
     /* — Accents & lines — */
     --accent: #8ab4ff;
-    --accent-soft: rgba(138, 180, 255, 0.14);
+    /* Derived from --accent so changing the brand color updates the soft
+       accent (hover pills, focus glow) automatically — one value, many uses. */
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
     --border: rgba(255, 255, 255, 0.10);
 
-    /* — Background-image overlay & header (advanced) — */
-    --overlay: rgba(10, 11, 14, 0.40);
+    /* — Background-image overlay & header — */
     --overlay-top: rgba(14, 15, 19, 0.79);
     --overlay-bottom: rgba(14, 15, 19, 0.98);
     --header-bg: rgba(14, 15, 19, 0.82);
-    --panel-blur: 8px; /* frosted-glass radius; lowered from 14px to ease scroll repaint cost without visibly changing the look */
-
-    /* — Carousel (uses the tokens above; these are the only extras) — */
-    --carousel-scrim: rgba(0, 0, 0, 0.55); /* caption gradient over image */
-    --carousel-chip-bg: rgba(0, 0, 0, 0.45); /* "n / total" counter chip */
-    --carousel-chip-text: #f4f5f8;
-
-    /* — Brand / social colors —
-       Per-platform colors for social + contact icons. Currently identical in
-       light and dark mode (kept on hover too); defined per-theme so they CAN
-       diverge later without hunting through rules. Change a brand color here. */
-    --brand-instagram: #e1306c;
-    --brand-youtube: #ff0000;
-    --brand-phone: #2e9e4f;
-    --brand-email: #3b5bdb;
-
-    /* — On-image controls (lightbox, carousel dots) —
-       These sit on top of photos, so they're deliberately NOT theme tokens:
-       they stay dark-on-light regardless of theme for legibility over images. */
-    --on-image-text: #fff;            /* icon/text drawn over a photo */
-    --on-image-btn-bg: rgba(0, 0, 0, 0.45);     /* idle control background */
-    --on-image-btn-bg-hover: rgba(0, 0, 0, 0.7); /* hovered control background */
-    --on-image-hairline: rgba(255, 255, 255, 0.25); /* control border */
-    --on-image-veil: rgba(0, 0, 0, 0.88);       /* full lightbox backdrop */
-    --dot-veil-bg: rgba(0, 0, 0, 0.35);         /* dots pill background */
-    --dot-ring: rgba(255, 255, 255, 0.75);      /* idle dot outline */
-    --dot-fill-hover: rgba(255, 255, 255, 0.35);/* dot fill on hover */
 }
 
-/* Light */
+/* Light — only tokens that DIFFER from dark; shared tokens are in :root. */
 [data-theme="light"] {
     /* — Backgrounds — */
     --bg-base: #ffffff; /* page background */
@@ -117,44 +116,20 @@
     /* — Menu / nav — */
     --menu-text: #4b4d55; /* idle nav link */
     --menu-text-active: #15161a; /* hovered / active nav link */
-    --menu-hover-bg: rgba(59, 91, 219, 0.10); /* hover pill behind link */
+    --menu-hover-bg: var(--accent-soft); /* hover pill behind link */
 
     /* — Accents & lines — */
     --accent: #3b5bdb;
-    --accent-soft: rgba(59, 91, 219, 0.10);
+    /* Derived from --accent. Light mode uses a slightly lower 10% tint. */
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
     --border: rgba(43, 43, 43, 0.49);
 
-    /* — Background-image overlay & header (advanced) — */
-    /* Stronger than before: in light mode the background photo was competing
-       with content (washed-glass look). These heavier overlays push the photo
-       back so cards/text read cleanly while still showing the image. */
-    --overlay: rgba(255, 255, 255, 0.55);
+    /* — Background-image overlay & header —
+       Heavier than dark: pushes the background photo back so cards/text read
+       cleanly in light mode while still showing the image. */
     --overlay-top: rgba(255, 255, 255, 0.90);
     --overlay-bottom: rgba(255, 255, 255, 0.62);
     --header-bg: rgba(255, 255, 255, 0.90);
-    --panel-blur: 8px;
-
-    /* — Carousel (caption scrim/chip stay dark for legibility over photos) — */
-    --carousel-scrim: rgba(0, 0, 0, 0.50);
-    --carousel-chip-bg: rgba(0, 0, 0, 0.45);
-    --carousel-chip-text: #f4f5f8;
-
-    /* — Brand / social colors — (identical to dark; see note there) */
-    --brand-instagram: #e1306c;
-    --brand-youtube: #ff0000;
-    --brand-phone: #2e9e4f;
-    --brand-email: #3b5bdb;
-
-    /* — On-image controls — (identical to dark: these live over photos, so
-       they stay dark-on-light in both themes for legibility) */
-    --on-image-text: #fff;
-    --on-image-btn-bg: rgba(0, 0, 0, 0.45);
-    --on-image-btn-bg-hover: rgba(0, 0, 0, 0.7);
-    --on-image-hairline: rgba(255, 255, 255, 0.25);
-    --on-image-veil: rgba(0, 0, 0, 0.88);
-    --dot-veil-bg: rgba(0, 0, 0, 0.35);
-    --dot-ring: rgba(255, 255, 255, 0.75);
-    --dot-fill-hover: rgba(255, 255, 255, 0.35);
 }
 
 /* ---- Reset-ish -------------------------------------------------------- */
@@ -467,19 +442,42 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     transform: scale(var(--press-scale));
 }
 
+/* Theme toggle icon — one SVG that morphs between a crescent moon (dark mode,
+   default) and a rayed sun (light mode). The "bite" is a mask circle that
+   slides off-shape in light mode; the rays fade + scale in. Pure CSS, driven
+   by [data-theme="light"] on <body>. The global prefers-reduced-motion rule
+   collapses these transitions to an instant swap. */
 .theme-toggle__icon {
-    width: 1.05rem;
-    height: 1.05rem;
-    border-radius: 50%;
-    background: var(--text);
-    box-shadow: inset -0.4rem -0.4rem 0 0 var(--bg-panel-solid);
-    transition: all var(--transition);
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--text);
+    overflow: visible;
 }
 
-[data-theme="light"] .theme-toggle__icon {
-    background: var(--text);
-    box-shadow: inset 0 0 0 0.18rem var(--bg-panel-solid);
-    transform: rotate(180deg);
+.theme-toggle__cut {
+    /* Slides between biting into the core (crescent) and fully clear (disc). */
+    transition: transform var(--transition);
+    transform: translateX(0);
+}
+
+.theme-toggle__rays {
+    opacity: 0;
+    transform: scale(0.4);
+    transform-origin: center;
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+/* Light mode → sun: the mask bite slides fully clear (disc), rays bloom in.
+   The core radius is intentionally NOT animated: animating the SVG `r`
+   property isn't a valid CSS length without a unit and isn't supported in
+   Firefox, and the bite-slide + rays carry the morph on their own. */
+[data-theme="light"] .theme-toggle__cut {
+    transform: translateX(20px);
+}
+
+[data-theme="light"] .theme-toggle__rays {
+    opacity: 1;
+    transform: scale(1);
 }
 
 /* Mobile menu toggle (hidden on desktop) */
@@ -1974,7 +1972,7 @@ body.lightbox-open {
     padding: 2.5rem 1.75rem;
     border: 1px solid var(--border, rgba(127, 127, 127, 0.25));
     border-radius: 14px;
-    background: var(--bg-elevated, rgba(127, 127, 127, 0.06));
+    background: var(--bg-panel);
     text-align: center;
 }
 
@@ -1987,7 +1985,7 @@ body.lightbox-open {
 .error-state__lead {
     margin: 0 auto 1.5rem;
     max-width: 38rem;
-    color: var(--text-muted, inherit);
+    color: var(--text-soft);
     line-height: 1.6;
 }
 
@@ -2004,7 +2002,7 @@ body.lightbox-open {
     margin-left: auto;
     margin-right: auto;
     font-size: 0.875rem;
-    color: var(--text-muted, inherit);
+    color: var(--text-soft);
 }
 
 .error-state__details summary {
