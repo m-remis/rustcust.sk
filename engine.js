@@ -60,6 +60,41 @@ let SITE = {};
    2. SMALL HELPERS
 ---------------------------------------------------------------------- */
 
+const TAB_HASH_PREFIX = "#/";
+
+function panelId(id) {
+    return `panel-${id}`;
+}
+
+function tabHash(id) {
+    return `${TAB_HASH_PREFIX}${encodeURIComponent(id)}`;
+}
+
+function readTabHash() {
+    const hash = location.hash || "";
+
+    if (hash.startsWith(TAB_HASH_PREFIX)) {
+        return decodeURIComponent(hash.slice(TAB_HASH_PREFIX.length));
+    }
+
+    // Legacy support for old URLs like #kontakt.
+    // After we rename panels to panel-kontakt, this no longer causes native anchor scrolling.
+    if (hash.startsWith("#")) {
+        return decodeURIComponent(hash.slice(1));
+    }
+
+    return "";
+}
+
+function scrollToTopInstant() {
+    const html = document.documentElement;
+    const previous = html.style.scrollBehavior;
+
+    html.style.scrollBehavior = "auto";
+    window.scrollTo({top: 0, left: 0, behavior: "auto"});
+    html.style.scrollBehavior = previous;
+}
+
 const $ = (sel, root = document) => root.querySelector(sel);
 
 const el = (tag, attrs = {}, html = "") => {
@@ -858,6 +893,11 @@ function renderNav() {
 
     brand.textContent = SITE.brand;
 
+    const firstId = navItems()[0] && navItems()[0].id;
+    if (firstId) {
+        brand.href = tabHash(firstId);
+    }
+
     // Wrap the skull mascot, brand, and optional socials into one left-side
     // header cluster so header-fit measures skull + brand + socials as a unit.
     const brandWrap = el("div", {class: "brand-wrap"});
@@ -883,11 +923,11 @@ function renderNav() {
             el(
                 "a",
                 {
-                    href: `#${item.id}`,
+                    href: tabHash(item.id),
                     "data-nav": item.id,
                     role: "tab",
                     id: `tab-${item.id}`,
-                    "aria-controls": item.id,
+                    "aria-controls": panelId(item.id),
                     "aria-selected": "false",
                     tabindex: "-1",
                 },
@@ -900,7 +940,7 @@ function renderNav() {
             el(
                 "a",
                 {
-                    href: `#${item.id}`,
+                    href: tabHash(item.id),
                     "data-nav": item.id,
                 },
                 item.label
@@ -924,7 +964,7 @@ function renderNav() {
 
 function buildSection(section) {
     const node = el("section", {
-        id: section.id,
+        id: panelId(section.id),
         class: "section",
         role: "tabpanel",
         "aria-labelledby": `tab-${section.id}`,
@@ -1260,7 +1300,7 @@ function initTabs() {
     const nav = navItems();
     const links = Array.from(document.querySelectorAll("[data-nav]"));
     const desktopTabs = Array.from(document.querySelectorAll("#navDesktop [role='tab']"));
-    const panels = nav.map((n) => document.getElementById(n.id)).filter(Boolean);
+    const panels = nav.map((n) => document.getElementById(panelId(n.id))).filter(Boolean);
     const ids = nav.map((n) => n.id);
     const defaultId = ids[0];
 
@@ -1282,36 +1322,33 @@ function initTabs() {
         }
     };
 
-    const show = (rawId, {focusPanel = false, push = true, scrollTop = true, forceTop = false} = {}) => {
+    let firstShow = true;
+
+    const show = (rawId, {focusPanel = false, push = true, scrollTop = true} = {}) => {
         const id = normalize(rawId);
 
         panels.forEach((p) => {
-            const active = p.id === id;
+            const active = p.id === panelId(id);
             p.hidden = !active;
-            p.classList.toggle("section--active", active);
+
+            // Do not animate the initial render. Only animate real tab changes.
+            p.classList.toggle("section--active", active && !firstShow);
         });
+
+        firstShow = false;
 
         links.forEach((link) => setActiveLink(link, id));
 
-        if (push && location.hash.slice(1) !== id) {
-            history.pushState(null, "", `#${id}`);
+        if (push && readTabHash() !== id) {
+            history.pushState(null, "", tabHash(id));
         }
 
         if (scrollTop) {
-            const toTop = () => window.scrollTo(0, 0);
-            toTop();
-            requestAnimationFrame(toTop);
-
-            if (forceTop) {
-                requestAnimationFrame(() => requestAnimationFrame(toTop));
-                setTimeout(toTop, 0);
-                setTimeout(toTop, 120);
-                window.addEventListener("load", toTop, {once: true});
-            }
+            scrollToTopInstant();
         }
 
         if (focusPanel) {
-            const panel = document.getElementById(id);
+            const panel = document.getElementById(panelId(id));
             if (panel) panel.focus({preventScroll: true});
         }
     };
@@ -1360,14 +1397,15 @@ function initTabs() {
     }
 
     window.addEventListener("hashchange", () => {
-        show(location.hash.slice(1) || defaultId, {push: false});
+        show(readTabHash() || defaultId, {push: false});
     });
 
     window.addEventListener("popstate", () => {
-        show(location.hash.slice(1) || defaultId, {push: false});
+        show(readTabHash() || defaultId, {push: false});
     });
 
-    show(location.hash.slice(1) || defaultId, {push: false, forceTop: true});
+    // Initial render: read #/kontakt or legacy #kontakt, but do not let browser anchor-scroll.
+    show(readTabHash() || defaultId, {push: false, scrollTop: true});
 }
 
 /* ----------------------------------------------------------------------
