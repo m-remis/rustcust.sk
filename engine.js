@@ -40,6 +40,7 @@ import {initSkull} from "./animation/skull/skull.js";
      { "type": "map", "mode": "embed", "embed","url","label","address" }
      { "type": "slideshow", "name","blurb", "slides": [ { "src","title","caption","text" } ] }
      { "type": "table", "name","blurb", "headings": [...], "rows": [ [...], ... ] }
+     { "type": "faq", "name","blurb", "items": [ { "q","a" } ] }
      { "type": "gallery", "name","blurb","columns", "images": [ { "src","title","caption","text" } ] }
      { "type": "photo", "src","title","caption","text" }
 
@@ -505,6 +506,82 @@ function buildTable(block) {
 
     scroll.appendChild(table);
     wrapper.appendChild(scroll);
+    return wrapper;
+}
+
+/* ----------------------------------------------------------------------
+   2B-bis. FAQ / ACCORDION
+
+   buildFaq(block) returns a list of expand/collapse question rows.
+   Shape: { name?, blurb?, items: [ { q, a }, ... ] }  (q + a required per item)
+   Each row is a native <button> toggling an answer panel — keyboard-operable
+   and screen-reader-labelled via aria-expanded + aria-controls, no JS state
+   machine needed (the click handler just flips the attribute + hidden). `q`
+   is plain text; `a` allows the same trusted inline HTML as text/table blurbs
+   (authored content only — never raw user/LLM input). Returns null if empty so
+   a misfilled block disappears instead of rendering broken; the validator
+   flags the emptiness separately.
+---------------------------------------------------------------------- */
+
+let faqSeq = 0;
+
+function buildFaq(block) {
+    const items = (block.items || []).filter(
+        (it) => it && (it.q != null) && (it.a != null)
+    );
+    if (!items.length) return null;
+
+    const wrapper = el("div", {class: "faq-block"});
+
+    if (block.name) {
+        wrapper.appendChild(el("h3", {class: "faq__name"}, block.name));
+    }
+    if (block.blurb) {
+        wrapper.appendChild(el("div", {class: "prose faq__blurb"}, `<p>${block.blurb}</p>`));
+    }
+
+    const list = el("div", {class: "faq__list"});
+    const seq = ++faqSeq;
+
+    items.forEach((it, i) => {
+        const panelId = `faq-${seq}-${i}`;
+        const btnId = `faq-${seq}-${i}-btn`;
+
+        const item = el("div", {class: "faq__item"});
+
+        // Question: a real <button> so it's keyboard + screen-reader native.
+        // Plain text only — set via textContent, not innerHTML.
+        const btn = el("button", {
+            type: "button",
+            class: "faq__q",
+            id: btnId,
+            "aria-expanded": "false",
+            "aria-controls": panelId,
+        });
+        btn.appendChild(el("span", {class: "faq__q-text"})).textContent = String(it.q);
+        btn.appendChild(el("span", {class: "faq__icon", "aria-hidden": "true"}));
+
+        // Answer: trusted inline HTML (matches text/table), hidden until opened.
+        const panel = el("div", {
+            class: "faq__a",
+            id: panelId,
+            role: "region",
+            "aria-labelledby": btnId,
+            hidden: true,
+        }, `<div class="prose">${it.a}</div>`);
+
+        btn.addEventListener("click", () => {
+            const open = btn.getAttribute("aria-expanded") === "true";
+            btn.setAttribute("aria-expanded", open ? "false" : "true");
+            panel.hidden = open;
+        });
+
+        item.appendChild(btn);
+        item.appendChild(panel);
+        list.appendChild(item);
+    });
+
+    wrapper.appendChild(list);
     return wrapper;
 }
 
@@ -977,6 +1054,7 @@ const BLOCK_RENDERERS = {
     map: buildMap,
     slideshow: buildCarousel,
     table: buildTable,
+    faq: buildFaq,
     gallery: buildGallery,
     photo: buildPhoto,
 };

@@ -238,6 +238,33 @@
               "caption": "Čistenie a starostlivosť o pohon."
             }
           ]
+        },
+        {
+          "type": "faq",
+          "name": "Časté otázky",
+          "blurb": "Zopár vecí, na ktoré sa ma pýtate najčastejšie.",
+          "items": [
+            {
+              "q": "Musím sa objednať?",
+              "a": "Objednať sa odporúčam — termín si vieme dohodnúť dopredu a bicykel preberiem v dohodnutý čas. Drobné veci viem niekedy vyriešiť aj na počkanie, ale radšej mi vopred napíš alebo zavolaj."
+            },
+            {
+              "q": "Robíš servis aj cez víkend?",
+              "a": "Áno, po dohode robím aj cez víkend. Víkendové termíny sú obmedzené, takže sa ozvi včas a dohodneme sa na čase."
+            },
+            {
+              "q": "Koľko trvá malý servis?",
+              "a": "Malý servis — nastavenie radenia, bŕzd a základná kontrola — zvyčajne zvládnem v priebehu jedného dňa. Pri väčšom rozsahu alebo objednávke dielov ti termín poviem vopred."
+            },
+            {
+              "q": "Mám priniesť čistý bicykel?",
+              "a": "Nemusíš, ale poteší ma to. Ak je bicykel veľmi zanesený, viem ho umyť ako súčasť servisu — len to spomeň pri preberaní, nech s tým počítam."
+            },
+            {
+              "q": "Robíš aj staré retro bicykle?",
+              "a": "Áno, retro a staršie bicykle robím rád. Pri starších komponentoch len dopredu upozorním, ak by bolo treba zháňať náhradné diely — niektoré sa už bežne nevyrábajú."
+            }
+          ]
         }
       ]
     },

@@ -28,7 +28,9 @@ editing — it lists every file the change obligates, not just the obvious one.
    `site-spec.json`. The HTML is an empty shell.
 3. Don't remove the `Built from m-remis/static-web-template` fingerprint.
 4. After any change, validate: `node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"`,
-   `node --check engine.js`, then `node launch-check.js`. Make the smallest
+   `node --check engine.js`, then `node launch-check.js`. (`site-spec.json` is
+   also schema-checked live in the editor against `site-spec.schema.json` — keep
+   that schema in sync when you add a block type or field.) Make the smallest
    change that satisfies the request; don't reformat unrelated code.
 
 ## Workflows (what a change obligates)
@@ -88,14 +90,19 @@ code, and it touches **four places that must agree**.
 4. **Validator:** add the type to `BLOCK_RULES` in `launch-check.js` (and a
    `checkXBlock()` for its required fields if it has any). **Skipping this makes
    `launch-check` falsely flag every use of the new type as unknown.**
-5. **AGENTS.md:** add a row to the block-types table (section "Block types and
+5. **Schema:** add the block's shape to `site-spec.schema.json` (a `blockX`
+   subschema in `$defs`, add it to the `block.oneOf` list and the `type` enum)
+   so the editor validates and autocompletes it. **Skipping this makes the IDE
+   flag every use of the new type as an invalid block.**
+6. **AGENTS.md:** add a row to the block-types table (section "Block types and
    their builders") and, if it's a notable function, the "Key functions" list.
-6. **CLIENT-CHECKLIST.md:** if the type is something clients will commonly fill
+7. **CLIENT-CHECKLIST.md:** if the type is something clients will commonly fill
    in, add it to the §1c per-block list.
 
 **Ripple checklist — a new block type is not done until:** `BLOCK_RENDERERS`,
-`BLOCK_RULES`, the `engine.js` `BLOCK TYPES` comment, and the AGENTS.md table
-**all** list it. (Removing a type: delete from the same four places, and grep
+`BLOCK_RULES`, the `engine.js` `BLOCK TYPES` comment, `site-spec.schema.json`,
+and the AGENTS.md table **all** list it. (Removing a type: delete from the same
+five places, and grep
 `site-spec.json` so no section still uses it.)
 **Done when:** the four lists agree, `node --check engine.js` passes, a test
 block of the new type renders, and `launch-check` doesn't warn "unknown type".
@@ -381,6 +388,7 @@ only its `block` argument, never `SITE`) and returns a node, a fragment, or
 | `map`        | `buildMap`       | `mode: "embed"` live iframe, or `mode: "static"` themed address card     |
 | `slideshow`  | `buildCarousel`  | 1 slide = framed image; 2+ = carousel w/ prev/next, dots, ARIA, lightbox |
 | `table`      | `buildTable`     | structured table (price list etc.); last column accent-styled            |
+| `faq`        | `buildFaq`       | accordion of `items` of `{ q, a }`; native button toggles, ARIA-wired    |
 | `gallery`    | `buildGallery`   | responsive image grid (opt. `columns` 1–6); shares the slideshow lightbox|
 | `photo`      | `buildPhoto`     | single-image sugar; normalizes to a one-image `gallery`                  |
 
@@ -468,7 +476,7 @@ colors live as standalone rules, identical in light and dark mode:
   missing/empty `sections` degrades to the empty/error state instead of throwing.
 - `navItems()` — derives the tab list from `getSections()` (id + label).
 - Builders: `buildHero`, `buildText`, `buildCards`, `buildLinks`, `buildMap`,
-  `buildTable`, `buildCarousel` (slideshow), `buildGallery`, `buildPhoto`, plus
+  `buildTable`, `buildCarousel` (slideshow), `buildGallery`, `buildPhoto`, `buildFaq`, plus
   `buildSocials` (header/drawer socials).
 - Dispatch: `BLOCK_RENDERERS`, `renderBlock()`,
   `buildSection()`, `renderContent()`.
@@ -622,7 +630,8 @@ There are no tests and no build. After editing:
 2. Serve and open the site — prefer `python3 -m http.server 8000` over
    `file://` (the page fetches `site-spec.json`; `file://` fails CORS and shows
    the error screen). Check: light/dark toggle, every nav tab, each block type
-   renders (hero, text, cards, links/contact icons, map, slideshow, tables), the
+   renders (hero, text, cards, links/contact icons, map, slideshow, table, faq,
+   gallery, photo), the
    mobile menu at a narrow viewport, the 404 page (`/404.html`), the skull
    mascot, and a clean console.
 3. On mobile (or a touch-emulated narrow viewport, ideally iOS Safari): open a

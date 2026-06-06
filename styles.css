@@ -36,7 +36,6 @@
        subtle "press" shrink shared by every button-like control. */
     --focus-ring: 2px solid var(--accent);
     --focus-offset: 3px;
-    --press-scale: 0.94;
 
     --unicode-arrow: "\2192"; /* Unicode for → */
 
@@ -439,7 +438,7 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 
 .theme-toggle:active,
 .menu-toggle:active {
-    transform: scale(var(--press-scale));
+    border-color: var(--accent);
 }
 
 /* Theme toggle icon — one SVG that morphs between a crescent moon (dark mode,
@@ -627,7 +626,7 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 }
 
 .nav-mobile__close:active {
-    transform: scale(var(--press-scale));
+    border-color: var(--accent);
 }
 
 .nav-mobile.is-open {
@@ -819,7 +818,12 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     backdrop-filter: blur(var(--panel-blur));
     border: 2px solid var(--border);
     border-radius: var(--radius);
-    transition: transform var(--transition), border-color var(--transition);
+    /* transform uses a short ease-OUT (fast start, gentle settle) so the 3px
+       lift feels crisp, not draggy; border-color keeps the shared curve. The
+       lift is composited (see will-change on a.card__link) so moving the
+       blurred panel doesn't repaint the backdrop-filter every frame — that
+       repaint was the stutter. */
+    transition: transform 140ms cubic-bezier(0.2, 0.7, 0.3, 1), border-color var(--transition);
     display: flex;
     flex-direction: column;
 }
@@ -849,6 +853,7 @@ a.card__link {
     display: flex;
     cursor: pointer;
     position: relative;
+    will-change: transform;
 }
 
 /* Persistent "go" cue on clickable cards, so the affordance survives on touch
@@ -1059,6 +1064,117 @@ a.card__link:not(:has(.card__meta)):hover::after {
     background: var(--menu-hover-bg);
 }
 
+/* ---- FAQ / accordion -------------------------------------------------- */
+/* Rendered by buildFaq() in engine.js from a `faq` block: optional name +
+   blurb, then `items` of { q, a }. Each row is a native <button> (the
+   question) toggling a `.faq__a` panel (the answer). Uses the same panel
+   tokens as cards/links/table so it re-themes in light/dark for free. The
+   +/- icon is drawn with pseudo-elements (no icon font / SVG asset). */
+
+/* Heading + blurb: identical to .table__name / .table__blurb. */
+.faq__name {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
+
+.faq__blurb {
+    margin: 0 0 0.75rem;
+}
+
+.faq__list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.faq__item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-panel);
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    backdrop-filter: blur(var(--panel-blur));
+    overflow: hidden;
+}
+
+/* The question button fills its row, sits flat (the .faq__item frames it). */
+.faq__q {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.1rem;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    font-weight: 600;
+    color: var(--text);
+    transition: background var(--transition), color var(--transition);
+}
+
+.faq__q:hover {
+    background: var(--menu-hover-bg);
+    color: var(--accent);
+}
+
+.faq__q-text {
+    flex: 1;
+}
+
+/* +/- toggle drawn from two bars; the vertical one hides when expanded. */
+.faq__icon {
+    position: relative;
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+.faq__icon::before,
+.faq__icon::after {
+    content: "";
+    position: absolute;
+    background: var(--accent);
+    transition: transform var(--transition), opacity var(--transition);
+}
+
+.faq__icon::before { /* horizontal bar */
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform: translateY(-50%);
+}
+
+.faq__icon::after { /* vertical bar */
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+/* Expanded: rotate the set and collapse the vertical bar into a minus. */
+.faq__q[aria-expanded="true"] .faq__icon::after {
+    opacity: 0;
+    transform: translateX(-50%) rotate(90deg);
+}
+
+/* The answer panel. `hidden` (set by JS) collapses it; when shown it gets a
+   thin divider from the question and the standard prose treatment inside. */
+.faq__a {
+    padding: 0 1.1rem 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-soft);
+}
+
+.faq__a .prose {
+    margin-top: 0.85rem;
+}
+
 /* ---- Map: embed mode (live Google iframe) ----------------------------- */
 .map-embed {
     border: 1px solid var(--border);
@@ -1135,7 +1251,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 .map-open-row a:active {
-    transform: scale(0.97);
+    border-color: var(--accent);
 }
 
 @media (max-width: 640px) {
@@ -1370,7 +1486,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 .carousel__nav:active {
-    transform: translateY(-50%) scale(0.92);
+    border-color: var(--accent);
 }
 
 /* Dots indicator, floating inside the image without sitting on captions. */
@@ -1483,7 +1599,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 .gallery__item:active {
-    transform: translateY(0) scale(0.99);
+    border-color: var(--accent);
 }
 
 .gallery__item:focus-visible {
@@ -1608,6 +1724,12 @@ a.card__link:not(:has(.card__meta)):hover::after {
     /* Table: drop the sticky row highlight on touch (matches the rest). */
     .data-table tbody tr:hover {
         background: transparent;
+    }
+
+    /* FAQ: drop the sticky question hover on touch (the press still works). */
+    .faq__q:hover {
+        background: transparent;
+        color: var(--text);
     }
 
     .site-footer a:hover {
@@ -1893,7 +2015,7 @@ body.menu-open {
 }
 
 .lightbox__close:active {
-    transform: scale(var(--press-scale));
+    border-color: var(--on-image-text);
 }
 
 .lightbox__close:focus-visible {
@@ -1936,7 +2058,7 @@ body.menu-open {
 }
 
 .lightbox__nav:active {
-    transform: translateY(-50%) scale(var(--press-scale));
+    border-color: var(--on-image-text);
 }
 
 .lightbox__nav:focus-visible {

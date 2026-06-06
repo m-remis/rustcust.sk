@@ -25,6 +25,11 @@ After editing the spec, sanity-check the JSON:
 node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"
 ```
 
+`site-spec.json` is also covered by a JSON Schema (**`site-spec.schema.json`**),
+referenced from the spec's `$schema` field. An editor like VS Code or IntelliJ
+reads it to validate block types and fields live — wrong block type or a typo'd
+field lights up red as you type, before you ever run the validator.
+
 And before deploying, run the preflight validator — it catches placeholders,
 fake contact data, broken assets, and domain mismatches:
 
@@ -40,6 +45,9 @@ node launch-check.js
   bits). Read this before changing behavior or adding a block type.
 - **`LAUNCH-CHECK.md`** — the `launch-check.js` preflight validator: what it
   checks and how to run it.
+- **`site-spec.schema.json`** — JSON Schema for `site-spec.json`; gives live
+  validation + autocomplete in the editor. Not a doc to read, but keep it in
+  sync when you add a block type or field.
 
 ## Deploy
 

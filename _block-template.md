@@ -1,10 +1,11 @@
 # Block template — copy this to add a new block type
 
 This is the **canonical starting point** for adding a content block. A block
-type lives in **four places that must agree** (engine renderer, validator rules,
-the `BLOCK TYPES` comment in `engine.js`, and the block table in `AGENTS.md`).
-Copy the four pieces below, rename `example` → your type, fill them in, and
-you've satisfied Workflow B without reverse-engineering an existing builder.
+type lives in **five places that must agree** (engine renderer, validator rules,
+the `BLOCK TYPES` comment in `engine.js`, the `site-spec.schema.json` subschema,
+and the block table in `AGENTS.md`). Copy the pieces below, rename `example` →
+your type, fill them in, and you've satisfied Workflow B without
+reverse-engineering an existing builder.
 
 > Full procedure: **Workflow B** in `AGENTS.md`. This file is the fill-in-the-
 > blanks companion. The `_` prefix and `.md` extension keep it out of the
@@ -12,12 +13,12 @@ you've satisfied Workflow B without reverse-engineering an existing builder.
 
 Replace the name **`example`** everywhere (builder `buildExample`, map key
 `example`, CSS `.example-block`, validator `checkExampleBlock` / `EXAMPLE_*`
-codes, and `"type": "example"`). Pick a short lowercase noun: `hours`, `faq`,
-`cta`, `steps`.
+codes, schema `blockExample`, and `"type": "example"`). Pick a short lowercase
+noun: `hours`, `faq`, `cta`, `steps`.
 
 ---
 
-## The 5-step checklist (from Workflow B)
+## The 6-step checklist (from Workflow B)
 
 - [ ] **1. Engine renderer** — add `buildExample()` + register it in
   `BLOCK_RENDERERS` (Piece 1).
@@ -28,13 +29,17 @@ codes, and `"type": "example"`). Pick a short lowercase noun: `hours`, `faq`,
   `checkBlockRequiredFields()`, and add the type to `BLOCK_RULES` in
   `launch-check.js` (Piece 4). *Skipping this makes `launch-check` flag every
   use of the new type as unknown.*
-- [ ] **5. Human docs + use it** — add a row to the block table in `AGENTS.md`,
+- [ ] **5. Schema** — add a `blockExample` subschema to `site-spec.schema.json`,
+  register it in `block.oneOf` and the `type` enum (Piece 5). *Skipping this
+  makes the IDE flag every use of the new type as invalid.*
+- [ ] **6. Human docs + use it** — add a row to the block table in `AGENTS.md`,
   add to `CLIENT-CHECKLIST.md` §1c if clients fill it in, then use
-  `{ "type": "example", ... }` in `site-spec.json` (Piece 5).
+  `{ "type": "example", ... }` in `site-spec.json` (Piece 6).
 
 **Done when** `BLOCK_RENDERERS`, `BLOCK_RULES`, the `engine.js` `BLOCK TYPES`
-comment, and the `AGENTS.md` table all list the type; `node --check engine.js`
-passes; a test block renders; and `launch-check` doesn't warn "unknown type".
+comment, the `site-spec.schema.json` subschema, and the `AGENTS.md` table all
+list the type; `node --check engine.js` passes; a test block renders; and
+`launch-check` doesn't warn "unknown type".
 
 ---
 
@@ -233,19 +238,62 @@ Available helpers: `hasNonEmptyString(v)`, `plainTextLength(v)`,
 
 ---
 
-## Piece 5 — Human docs + use it
+## Piece 5 — Schema (`site-spec.schema.json`)
 
-**5a.** Add a row to the block-types table in `AGENTS.md` ("Block types and
+Three edits, mirroring an existing block subschema (copy `blockTable` or
+`blockFaq`).
+
+**5a.** Add a `blockExample` subschema in `$defs`. `additionalProperties: false`
++ `required` mirrors the validator's required fields, so the IDE flags typos and
+  missing fields:
+
+```json
+"blockExample": {
+  "type": "object",
+  "additionalProperties": false,
+  "description": "one-line description of what it renders",
+  "required": ["type", "items"],
+  "properties": {
+    "type": { "const": "example" },
+    "name": { "type": "string" },
+    "blurb": { "type": "string" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label"],
+        "properties": { "label": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}
+```
+
+**5b.** Register it in the `block.oneOf` list: `{ "$ref": "#/$defs/blockExample" }`.
+
+**5c.** Add the type to the `block.properties.type.enum` array so the bare
+`"type"` field autocompletes it.
+
+> Verify: your `site-spec.json` still validates, and a deliberately-broken
+> example block (wrong field name, missing `items`) lights up red in the editor.
+
+---
+
+## Piece 6 — Human docs + use it
+
+**6a.** Add a row to the block-types table in `AGENTS.md` ("Block types and
 their builders"):
 
 ```text
 | `example`    | `buildExample`   | one-line description of what it renders     |
 ```
 
-**5b.** If clients commonly fill this in, add it to `CLIENT-CHECKLIST.md` §1c
+**6b.** If clients commonly fill this in, add it to `CLIENT-CHECKLIST.md` §1c
 (the per-block placeholder list).
 
-**5c.** Use it in `site-spec.json`:
+**6c.** Use it in `site-spec.json`:
 
 ```json
 {
@@ -259,7 +307,7 @@ their builders"):
 }
 ```
 
-**5d.** Validate: `node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"`,
+**6d.** Validate: `node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"`,
 `node --check engine.js`, `node launch-check.js`. Serve and confirm the block
 renders in light + dark and on a narrow viewport.
 

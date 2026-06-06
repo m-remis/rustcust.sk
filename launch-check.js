@@ -125,6 +125,9 @@ const BLOCK_RULES = Object.freeze({
     table: {
         description: "responsive table block",
     },
+    faq: {
+        description: "FAQ / accordion block",
+    },
     photo: {
         description: "single image/photo block",
     },
@@ -177,6 +180,14 @@ const PLACEHOLDER_DOMAINS = [
 
 const errors = [];   // [{ category, code, message }]
 const warnings = []; // [{ category, code, message }]
+
+/* Set once by checkSpecShape so block checks can consult the single-source-of-
+   truth fallbacks the engine uses: a map block inherits business.mapEmbed /
+   mapUrl, and a links block can resolve `use: [...]` against business/socials.
+   Without this, map/links blocks that rely on those fallbacks (and render
+   fine) get flagged as empty. */
+let specBusiness = {};
+let specSocials = [];
 
 function fail(category, code, message) {
     if (message == null) {
@@ -376,6 +387,10 @@ function checkSpecShape(spec) {
         return;
     }
 
+    // Capture SSOT sources for block checks (map fallback, links `use`).
+    specBusiness = (spec.business && typeof spec.business === "object") ? spec.business : {};
+    specSocials = Array.isArray(spec.socials) ? spec.socials : [];
+
     if (!spec.brand || typeof spec.brand !== "string") {
         warn("spec", "MISSING_BRAND", `${SPEC_FILE}: missing top-level "brand"`);
     }
@@ -524,6 +539,9 @@ function checkBlockRequiredFields(block, where, section, sectionIds) {
         case "table":
             checkTableBlock(block, where);
             break;
+        case "faq":
+            checkFaqBlock(block, where);
+            break;
         case "slideshow":
             checkSlideshowBlock(block, where, section);
             break;
@@ -594,15 +612,44 @@ function checkCardsBlock(block, where, sectionIds) {
 }
 
 function checkLinksBlock(block, where, sectionIds) {
-    if (!Array.isArray(block.items) || block.items.length === 0) {
-        fail("spec", "LINKS_EMPTY", `${where} (links) has no "items"`);
+    const use = Array.isArray(block.use) ? block.use : [];
+    const items = Array.isArray(block.items) ? block.items : [];
+
+    // The engine builds rows from `use` (SSOT refs into business/socials) AND
+    // any inline `items`, in that order. Empty only if BOTH are empty.
+    if (use.length === 0 && items.length === 0) {
+        fail("spec", "LINKS_EMPTY", `${where} (links) has neither "use" refs nor "items"`);
         return;
+    }
+
+    // Validate each `use` key resolves to something the engine can render: a
+    // contact field on business, or a social entry by icon key. An unresolved
+    // ref is silently dropped at runtime, so the row just vanishes.
+    if (use.length) {
+        const socialKeys = new Set(specSocials.map((s) => s && s.icon).filter(Boolean));
+        const resolvable = (key) => {
+            if (key === "phone") return hasNonEmptyString(specBusiness.phone);
+            if (key === "email") return hasNonEmptyString(specBusiness.email);
+            return socialKeys.has(key);
+        };
+        const seenUse = new Set();
+        use.forEach((key, i) => {
+            const kw = `${where}.use[${i}]`;
+            if (!hasNonEmptyString(key)) {
+                fail("spec", "LINK_USE_EMPTY", `${kw} is an empty ref`);
+                return;
+            }
+            if (!resolvable(key)) {
+                warn("links", "LINK_USE_UNRESOLVED", `${kw} ref "${key}" matches no business field or social — the engine will drop this row`);
+            }
+            checkDuplicateValue(seenUse, key, "links", "DUPLICATE_LINK_USE", `${kw} duplicates ref "${key}"`);
+        });
     }
 
     const seenLabels = new Set();
     const seenUrls = new Set();
 
-    block.items.forEach((item, i) => {
+    items.forEach((item, i) => {
         const iw = `${where}.items[${i}]`;
         if (!item || typeof item !== "object") {
             fail("spec", "LINK_ITEM_NOT_OBJECT", `${iw} is not an object`);
@@ -666,6 +713,29 @@ function checkTableBlock(block, where) {
     });
 }
 
+function checkFaqBlock(block, where) {
+    if (!Array.isArray(block.items) || block.items.length === 0) {
+        fail("spec", "FAQ_EMPTY", `${where} (faq) has no "items"`);
+        return;
+    }
+
+    const seenQ = new Set();
+    block.items.forEach((it, i) => {
+        const iw = `${where}.items[${i}]`;
+        if (!hasNonEmptyString(it && it.q)) {
+            fail("spec", "FAQ_ITEM_NO_QUESTION", `${iw} (faq) has no "q" (question)`);
+        }
+        if (!hasNonEmptyString(it && it.a)) {
+            fail("spec", "FAQ_ITEM_NO_ANSWER", `${iw} (faq) has no "a" (answer)`);
+        } else if (plainTextLength(it.a) < 15) {
+            warn("content", "FAQ_ANSWER_TOO_SHORT", `${iw} (faq) answer is very short`);
+        }
+        if (it && it.q) {
+            checkDuplicateValue(seenQ, it.q, "content", "DUPLICATE_FAQ_QUESTION", `${iw} duplicates another question in the same block`);
+        }
+    });
+}
+
 function checkSlideshowBlock(block, where, section) {
     if (!Array.isArray(block.slides) || block.slides.length === 0) {
         fail("spec", "SLIDESHOW_EMPTY", `${where} (slideshow) has no "slides"`);
@@ -687,8 +757,13 @@ function checkSlideshowBlock(block, where, section) {
 }
 
 function checkMapBlock(block, where) {
-    if (!block.url && !block.embed) {
-        fail("spec", "MAP_MISSING_URL", `${where} (map) has neither "url" nor "embed"`);
+    // The engine falls back to business.mapEmbed / mapUrl when the block omits
+    // url/embed (SSOT). Only fail if NOTHING — block or business — supplies a
+    // source, which is the case the engine renders to nothing.
+    const bizEmbed = hasNonEmptyString(specBusiness.mapEmbed);
+    const bizUrl = hasNonEmptyString(specBusiness.mapUrl);
+    if (!block.url && !block.embed && !bizEmbed && !bizUrl) {
+        fail("spec", "MAP_MISSING_URL", `${where} (map) has no "url"/"embed" and business has no mapUrl/mapEmbed to fall back to`);
         return;
     }
 

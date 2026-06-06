@@ -164,8 +164,8 @@ order. Each entry is `{ id, label, title?, blocks: [...] }`:
   leads with a `hero` block usually omits it.
 - [ ] **`blocks[]`** — ordered content blocks, each `{ "type": …, … }`.
   Reorder a section by reordering its blocks. Supported types: `hero`, `text`,
-  `cards`, `links`, `map`, `slideshow`, `table`, `gallery`, `photo` — shapes in
-  `AGENTS.md` and the `engine.js` header comment.
+  `cards`, `links`, `map`, `slideshow`, `table`, `faq`, `gallery`, `photo` —
+  shapes in `AGENTS.md` and the `engine.js` header comment.
 
 Per-block placeholders to hunt down for a new client:
 
@@ -177,18 +177,25 @@ Per-block placeholders to hunt down for a new client:
   template author's.
 - [ ] **`cards`** — `items[]` of `{ title, body, meta?, url? }`. With
   `linked: true`, each card with a `url` becomes a link; replace `#`/dummy URLs.
-- [ ] **`links`** (contact rows) — `items[]` of `{ label, handle, url, icon? }`.
-  **Replace the template `r@r.sk` / `+421 000 000 00` defaults** — both are
-  caught as fake by `launch-check`. Keep `mailto:` / `tel:` schemes correct.
-  `icon` reuses the `SOCIAL_ICONS` keys for a leading contact icon.
+- [ ] **`links`** (contact rows) — prefer **`use`**: a list of keys resolved
+  against `business`/`socials` (e.g. `"use": ["phone","email","instagram"]`),
+  so a number/handle is typed once in `business` and reused. You can also add
+  explicit `items[]` of `{ label, handle, url, icon? }`. A `use` key that
+  matches nothing is warned (`LINK_USE_UNRESOLVED`). **Replace the template
+  `r@r.sk` / `+421 000 000 00` defaults in `business`** — both are caught as
+  fake by `launch-check`.
 - [ ] **`map`** — `mode: "embed"` (Google Maps → Share → Embed → copy the
   iframe `src` into `embed`) or `mode: "static"` (themed card, no iframe).
-  Set `url` for the "Open in Maps" button and `label`/`address`. **Any template
-  default location must be replaced.**
+  `url`/`embed` can be omitted to **fall back to `business.mapUrl`/`mapEmbed`**
+  (the single-source-of-truth path). Set `label`/`address` for the accessible
+  fallback text. **Any template default location must be replaced.**
 - [ ] **`table`** (e.g. a price list) — `headings[]` + `rows[][]`. The last
   column is right-aligned/accent-styled, which reads as a price column. A
   pricing-looking section with no price-like content (`€`, `od`, `dohodou`, …)
   is warned.
+- [ ] **`faq`** (accordion) — `items[]` of `{ q, a }` (both required). `q` is
+  plain text; `a` allows `<em>`/`<a>` (authored only). Optional `name`/`blurb`
+  heading. A short answer (<15 chars) is warned.
 - [ ] **`slideshow`** — `slides[]` of `{ src, title?, caption?, text? }`
   (`src` required). 1 slide = framed image; 2+ = carousel with lightbox.
 - [ ] **`gallery`** — `images[]` of `{ src, title?, caption?, text? }`, optional
@@ -329,7 +336,10 @@ Accents & lines, advanced overlay/header, Carousel). Re-skinning the whole site
 
 - [ ] **Validate + preflight:**
   `node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"`,
-  `node --check engine.js`, then `node launch-check.js` to `PASS`.
+  `node --check engine.js`, then `node launch-check.js` to `PASS`. Tip: editing
+  `site-spec.json` in VS Code / IntelliJ gives live validation against
+  `site-spec.schema.json` (wrong block type or field shows red as you type) —
+  the fastest way to catch shape mistakes before the preflight.
 - [ ] **Serve and click through** — `python3 -m http.server 8000` (not
   `file://`, which fails the fetch and shows the error screen). Check: light/dark
   toggle, every nav tab, each block type renders, the mobile menu at a narrow
