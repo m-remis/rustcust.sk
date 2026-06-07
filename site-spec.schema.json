@@ -75,7 +75,21 @@
           }
         },
         "mapUrl": { "type": "string", "description": "Public Google Maps link (Open in Maps button)." },
-        "mapEmbed": { "type": "string", "description": "Google Maps embed URL for the live iframe." }
+        "mapEmbed": { "type": "string", "description": "Google Maps embed URL for the live iframe." },
+        "hours": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Opening hours by weekday. Values are free-form display strings (e.g. \"9:00–17:00\", \"Zatvorené\"). Rendered by the \"hours\" block, which highlights the current day. Missing days render as a dash.",
+          "properties": {
+            "mon": { "type": "string" },
+            "tue": { "type": "string" },
+            "wed": { "type": "string" },
+            "thu": { "type": "string" },
+            "fri": { "type": "string" },
+            "sat": { "type": "string" },
+            "sun": { "type": "string" }
+          }
+        }
       }
     },
     "meta": {
@@ -156,7 +170,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["hero", "text", "cards", "links", "map", "slideshow", "table", "faq", "gallery", "photo"]
+          "enum": ["hero", "text", "cards", "links", "map", "slideshow", "table", "faq", "gallery", "photo", "hours"]
         }
       },
       "oneOf": [
@@ -169,7 +183,8 @@
         { "$ref": "#/$defs/blockTable" },
         { "$ref": "#/$defs/blockFaq" },
         { "$ref": "#/$defs/blockGallery" },
-        { "$ref": "#/$defs/blockPhoto" }
+        { "$ref": "#/$defs/blockPhoto" },
+        { "$ref": "#/$defs/blockHours" }
       ]
     },
     "blockHero": {
@@ -332,13 +347,14 @@
     "blockGallery": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Responsive image grid sharing the slideshow lightbox.",
+      "description": "Paged responsive image grid sharing the slideshow lightbox. Tiles are image-only; per-image title/caption are NOT shown as visible captions — they feed alt text and the lightbox caption only.",
       "required": ["type", "images"],
       "properties": {
         "type": { "const": "gallery" },
         "name": { "type": "string" },
         "blurb": { "type": "string" },
         "columns": { "type": "integer", "minimum": 1, "maximum": 6, "description": "Optional column count (1–6)." },
+        "perPage": { "type": "integer", "minimum": 1, "description": "Tiles shown per page before paging. Defaults to 12." },
         "images": {
           "type": "array",
           "minItems": 1,
@@ -357,6 +373,17 @@
         "title": { "type": "string" },
         "caption": { "type": "string" },
         "text": { "type": "string" }
+      }
+    },
+    "blockHours": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Opening-hours table. Carries no hours data itself — reads SITE.business.hours (single source of truth) and highlights the current day.",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "hours" },
+        "name": { "type": "string" },
+        "blurb": { "type": "string" }
       }
     },
     "imageItem": {

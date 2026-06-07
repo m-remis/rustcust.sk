@@ -16,7 +16,16 @@
       "label": "M. R. Štefánika 624/10, Rajec"
     },
     "mapUrl": "https://maps.app.goo.gl/sC1H3aNMKeq9ZPvG6",
-    "mapEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2612.8265648432184!2d18.631298776804456!3d49.08993598438358!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4714f55524f56759%3A0xcec166df13056af7!2sCyklodie%C5%88a%20RustCust!5e0!3m2!1ssk!2sus!4v1780425535664!5m2!1ssk!2sus"
+    "mapEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2612.8265648432184!2d18.631298776804456!3d49.08993598438358!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4714f55524f56759%3A0xcec166df13056af7!2sCyklodie%C5%88a%20RustCust!5e0!3m2!1ssk!2sus!4v1780425535664!5m2!1ssk!2sus",
+    "hours": {
+      "mon": "9:00–17:00",
+      "tue": "9:00–17:00",
+      "wed": "9:00–17:00",
+      "thu": "9:00–17:00",
+      "fri": "9:00–17:00",
+      "sat": "Na objednávku",
+      "sun": "Zatvorené"
+    }
   },
   "meta": {
     "lang": "sk",
@@ -442,35 +451,6 @@
       ]
     },
     {
-      "id": "findme",
-      "label": "Kde ma nájdeš",
-      "title": "Kde ma nájdeš.",
-      "blocks": [
-        {
-          "type": "text",
-          "text": "Cyklodielňu RustCust nájdeš na adrese M. R. Štefánika 624/10, Rajec."
-        },
-        {
-          "type": "map",
-          "mode": "embed",
-          "label": "Mapa s polohou cyklodielne RustCust",
-          "address": "M. R. Štefánika 624/10, Rajec"
-        },
-        {
-          "type": "slideshow",
-          "name": "Cyklodielňa",
-          "slides": [
-            {
-              "src": "assets/slides/workshop_outside.png",
-              "title": "Cyklodielňa RustCust",
-              "caption": "M. R. Štefánika 624/10",
-              "text": "Rajec"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "id": "galeria",
       "label": "Galéria",
       "title": "Galéria.",
@@ -516,6 +496,47 @@
               "caption": "Absolutne namakaný peugeot"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "findme",
+      "label": "Kde ma nájdeš",
+      "title": "Kde ma nájdeš.",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Cyklodielňu RustCust nájdeš na adrese M. R. Štefánika 624/10, Rajec."
+        },
+        {
+          "type": "map",
+          "mode": "embed",
+          "label": "Mapa s polohou cyklodielne RustCust",
+          "address": "M. R. Štefánika 624/10, Rajec"
+        },
+        {
+          "type": "slideshow",
+          "name": "Cyklodielňa",
+          "slides": [
+            {
+              "src": "assets/slides/workshop_outside.png",
+              "title": "Cyklodielňa RustCust",
+              "caption": "M. R. Štefánika 624/10",
+              "text": "Rajec"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "otvaracie-hodiny",
+      "label": "Otváracie hodiny",
+      "title": "Otváracie hodiny.",
+      "blocks": [
+        {
+          "type": "hours",
+          "name": "Otváracie hodiny",
+          "blurb": "Najlepšie po dohode vopred."
         }
       ]
     },

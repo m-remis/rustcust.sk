@@ -41,8 +41,14 @@ import {initSkull} from "./animation/skull/skull.js";
      { "type": "slideshow", "name","blurb", "slides": [ { "src","title","caption","text" } ] }
      { "type": "table", "name","blurb", "headings": [...], "rows": [ [...], ... ] }
      { "type": "faq", "name","blurb", "items": [ { "q","a" } ] }
-     { "type": "gallery", "name","blurb","columns", "images": [ { "src","title","caption","text" } ] }
+     { "type": "gallery", "name","blurb","columns","perPage", "images": [ { "src","title","caption" } ] }
      { "type": "photo", "src","title","caption","text" }
+     { "type": "hours", "name","blurb" }   // reads SITE.business.hours
+
+   Most builders are pure (read only their `block` arg). The exceptions read
+   single-source-of-truth data from SITE.business via getBusiness(): `map`
+   (address/embed fallback) and `hours` (the week of opening times). New blocks
+   should stay pure unless they're rendering SSOT business data.
 
    IMPORTANT: block text intentionally supports small trusted inline HTML
    (<em>, <a>). Author these values yourself; never feed user-supplied raw
@@ -945,17 +951,24 @@ function buildCarousel(block) {
 
    buildGallery(block) renders a responsive grid of image tiles. Same theme
    tokens and the SAME shared lightbox as the carousel (getLightbox), but every
-   image is visible at once instead of one paged frame. Click any tile → the
-   lightbox opens at that image, then arrow through the whole set. Broken images
-   fail silently (panel background shows through), matching the carousel.
+   tiles are shown one page at a time (see perPage); a pager steps between pages.
+   Tiles are image-only — no caption strip under them. Click any tile → the
+   lightbox opens at that image's absolute index, then arrow through the WHOLE
+   set (across pages). Broken images fail silently (panel background shows
+   through), matching the carousel.
 
    Block shape:
-   { "type": "gallery", "name"?, "blurb"?, "columns"?: 2|3|4,
-     "images": [ { "src", "title"?, "caption"?, "text"? } ] }  // src required
+   { "type": "gallery", "name"?, "blurb"?, "columns"?: 2|3|4, "perPage"?: int,
+     "images": [ { "src", "title"?, "caption"? } ] }  // src required
+
+   title/caption are NOT rendered as visible tile captions — they feed the
+   image alt text and the lightbox caption only. perPage defaults to 12.
 
    buildPhoto(block) is single-image sugar: normalizes to a one-image gallery so
    it shares the styling + lightbox. Shape: { "type": "photo", "src", ... }.
 ---------------------------------------------------------------------- */
+
+const GALLERY_PER_PAGE_DEFAULT = 12;
 
 function buildGallery(block) {
     block = block || {};
@@ -967,7 +980,18 @@ function buildGallery(block) {
     const uid = `gallery-${++carouselSeq}`; // reuse the carousel sequence counter
 
     // Same data the carousel feeds the lightbox — identical preview experience.
+    // Built once over the FULL list so lightbox indices are absolute: arrowing
+    // in the lightbox traverses every image regardless of the visible page.
     const lightboxSlides = toLightboxSlides(list);
+
+    // How many tiles per page. Clamp to a sane minimum; default keeps a few
+    // rows visible without dumping a whole archive at once.
+    let perPage = Number(block.perPage);
+    if (!Number.isInteger(perPage) || perPage < 1) perPage = GALLERY_PER_PAGE_DEFAULT;
+
+    const pageCount = Math.ceil(list.length / perPage);
+    const paged = pageCount > 1;
+    let page = 0; // current page index (0-based)
 
     const wrapper = el("div", {class: "gallery-block"});
 
@@ -989,8 +1013,9 @@ function buildGallery(block) {
     }
     const grid = el("div", gridAttrs);
 
-    list.forEach((s, i) => {
-        const altText = s.title || s.caption || `Obrázok ${i + 1}`;
+    // Build one tile for absolute index `absI` in the full list.
+    const buildTile = (s, absI) => {
+        const altText = s.title || s.caption || `Obrázok ${absI + 1}`;
 
         // Each tile is a real button → focusable + keyboard-openable, exactly
         // like the carousel's .carousel__expand trigger.
@@ -1005,7 +1030,8 @@ function buildGallery(block) {
             class: "gallery__img",
             src: s.src,
             alt: escapeAttr(altText),
-            loading: i < 4 ? "eager" : "lazy", // first row eager, rest lazy
+            // First row of the FIRST page eager; everything else lazy.
+            loading: absI < 4 ? "eager" : "lazy",
             decoding: "async",
         });
 
@@ -1015,21 +1041,77 @@ function buildGallery(block) {
 
         trigger.appendChild(img);
 
-        // Optional caption strip under the tile (only if the image has text).
-        if (s.title || s.caption) {
-            const cap = el("span", {class: "gallery__caption"});
-            if (s.title) cap.appendChild(el("span", {class: "gallery__title"}, s.title));
-            if (s.caption) cap.appendChild(el("span", {class: "gallery__text"}, s.caption));
-            trigger.appendChild(cap);
+        // Tap a tile → open the shared lightbox at its ABSOLUTE index, so the
+        // lightbox can arrow across the whole set, not just the visible page.
+        trigger.addEventListener("click", () => getLightbox().open(lightboxSlides, absI));
+
+        return trigger;
+    };
+
+    // Render the tiles for the current page (replaces grid contents).
+    const renderPage = () => {
+        grid.replaceChildren();
+        const start = page * perPage;
+        const end = Math.min(start + perPage, list.length);
+        for (let i = start; i < end; i++) {
+            grid.appendChild(buildTile(list[i], i));
         }
+    };
 
-        // Tap a tile → open the shared lightbox at that index.
-        trigger.addEventListener("click", () => getLightbox().open(lightboxSlides, i));
-
-        grid.appendChild(trigger);
-    });
-
+    renderPage();
     wrapper.appendChild(grid);
+
+    // Pager: only when the set spans more than one page.
+    if (paged) {
+        const pager = el("nav", {
+            class: "gallery__pager",
+            "aria-label": name ? `Stránkovanie galérie: ${name}` : "Stránkovanie galérie",
+        });
+
+        const status = el("span", {
+            class: "gallery__pager-status",
+            "aria-live": "polite",
+        });
+
+        const prev = el("button", {
+            type: "button",
+            class: "gallery__pager-btn gallery__pager-btn--prev",
+            "aria-label": "Predchádzajúca strana",
+        }, "&#10094;"); // ❮
+
+        const next = el("button", {
+            type: "button",
+            class: "gallery__pager-btn gallery__pager-btn--next",
+            "aria-label": "Ďalšia strana",
+        }, "&#10095;"); // ❯
+
+        const syncControls = () => {
+            status.textContent = `${page + 1} / ${pageCount}`;
+            prev.disabled = page === 0;
+            next.disabled = page === pageCount - 1;
+        };
+
+        const goToPage = (next0) => {
+            const clamped = Math.max(0, Math.min(next0, pageCount - 1));
+            if (clamped === page) return;
+            page = clamped;
+            renderPage();
+            syncControls();
+            // Keep the gallery heading/top in view after a page change.
+            wrapper.scrollIntoView({block: "nearest", behavior: "smooth"});
+        };
+
+        prev.addEventListener("click", () => goToPage(page - 1));
+        next.addEventListener("click", () => goToPage(page + 1));
+
+        pager.appendChild(prev);
+        pager.appendChild(status);
+        pager.appendChild(next);
+        syncControls();
+
+        wrapper.appendChild(pager);
+    }
+
     return wrapper;
 }
 
@@ -1040,6 +1122,77 @@ function buildPhoto(block) {
         blurb: block.blurb,
         images: [{src: block.src, title: block.title, caption: block.caption, text: block.text}],
     });
+}
+
+/* ----------------------------------------------------------------------
+   2C-bis. OPENING HOURS
+
+   Renders SITE.business.hours as a seven-row week (Pondelok…Nedeľa). Hours
+   are single-source-of-truth: the block carries no hours data, only an
+   optional name/blurb, and reads business.hours by key — same philosophy as
+   the links block referencing phone/email. Today's row is highlighted
+   (is-today + aria-current); no open/closed-now logic.
+
+   business.hours shape (all keys optional; a missing day shows a dash):
+     { "mon": "9:00–17:00", ..., "sat": "Zatvorené", "sun": "Zatvorené" }
+
+   Block shape: { "type": "hours", "name"?, "blurb"? }
+---------------------------------------------------------------------- */
+
+// Fixed Mon-first week. JS getDay() is Sun=0..Sat=6; HOURS_DAY_BY_GETDAY maps
+// that into our key order so "today" lands on the right row.
+const HOURS_DAYS = [
+    {key: "mon", label: "Pondelok"},
+    {key: "tue", label: "Utorok"},
+    {key: "wed", label: "Streda"},
+    {key: "thu", label: "Štvrtok"},
+    {key: "fri", label: "Piatok"},
+    {key: "sat", label: "Sobota"},
+    {key: "sun", label: "Nedeľa"},
+];
+const HOURS_DAY_BY_GETDAY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+function buildHours(block) {
+    block = block || {};
+    const hours = getBusiness().hours;
+    if (!hours || typeof hours !== "object") return null;
+
+    // Need at least one real day value, else there's nothing to show.
+    const hasAny = HOURS_DAYS.some((d) => typeof hours[d.key] === "string" && hours[d.key].trim());
+    if (!hasAny) return null;
+
+    const name = block.name;
+    const blurb = block.blurb;
+    const todayKey = HOURS_DAY_BY_GETDAY[new Date().getDay()];
+
+    const wrapper = el("div", {class: "hours-block"});
+
+    if (name) {
+        wrapper.appendChild(el("h3", {class: "hours__name"}, name));
+    }
+    if (blurb) {
+        wrapper.appendChild(el("div", {class: "prose hours__blurb"}, `<p>${blurb}</p>`));
+    }
+
+    const dl = el("dl", {class: "hours__list"});
+
+    HOURS_DAYS.forEach((d) => {
+        const raw = hours[d.key];
+        const value = (typeof raw === "string" && raw.trim()) ? raw.trim() : "—";
+        const isToday = d.key === todayKey;
+
+        const row = el("div", {
+            class: isToday ? "hours__row is-today" : "hours__row",
+            "aria-current": isToday ? "date" : false,
+        });
+
+        row.appendChild(el("dt", {class: "hours__day"}, d.label));
+        row.appendChild(el("dd", {class: "hours__value"}, escapeAttr(value)));
+        dl.appendChild(row);
+    });
+
+    wrapper.appendChild(dl);
+    return wrapper;
 }
 
 /* ----------------------------------------------------------------------
@@ -1057,6 +1210,7 @@ const BLOCK_RENDERERS = {
     faq: buildFaq,
     gallery: buildGallery,
     photo: buildPhoto,
+    hours: buildHours,
 };
 
 function renderBlock(block) {

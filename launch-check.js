@@ -134,6 +134,9 @@ const BLOCK_RULES = Object.freeze({
     gallery: {
         description: "image gallery/lightbox block",
     },
+    hours: {
+        description: "opening hours block (reads business.hours)",
+    },
 });
 
 const KNOWN_BLOCK_TYPES = Object.keys(BLOCK_RULES);
@@ -554,6 +557,9 @@ function checkBlockRequiredFields(block, where, section, sectionIds) {
         case "gallery":
             checkGalleryBlock(block, where, section);
             break;
+        case "hours":
+            checkHoursBlock(block, where);
+            break;
         default:
             // Unknown types are handled before dispatch.
             break;
@@ -799,16 +805,50 @@ function checkGalleryBlock(block, where, section) {
         }
     }
 
+    if (block.perPage != null) {
+        const n = Number(block.perPage);
+        if (!Number.isInteger(n) || n < 1) {
+            warn("spec", "GALLERY_PERPAGE_INVALID", `${where} (gallery) perPage should be a positive integer`);
+        }
+    }
+
     const seenSrc = new Set();
     block.images.forEach((img, i) => {
         const iw = `${where}.images[${i}]`;
         checkImageLike(img, iw, {
             kind: "Gallery image",
-            requireText: true,
+            requireText: false,
             sectionId: section && section.id,
         });
         if (img && img.src) {
             checkDuplicateValue(seenSrc, img.src, "assets", "DUPLICATE_GALLERY_SRC", `${iw} duplicates gallery image`);
+        }
+    });
+}
+
+const HOURS_DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function checkHoursBlock(block, where) {
+    const hours = (specBusiness && typeof specBusiness.hours === "object") ? specBusiness.hours : null;
+
+    if (!hours) {
+        warn("spec", "HOURS_NO_BUSINESS_HOURS",
+            `${where} (hours) has nothing to render: business.hours is not defined`);
+        return;
+    }
+
+    const present = HOURS_DAY_KEYS.filter((k) => hasNonEmptyString(hours[k]));
+    if (present.length === 0) {
+        warn("spec", "HOURS_EMPTY",
+            `${where} (hours) has nothing to render: business.hours defines no weekday values`);
+    }
+
+    // Catch typo'd day keys (e.g. "mom", "sut") that the schema's
+    // additionalProperties:false would also reject, but flagged here in plain language.
+    Object.keys(hours).forEach((k) => {
+        if (!HOURS_DAY_KEYS.includes(k)) {
+            warn("spec", "HOURS_UNKNOWN_DAY",
+                `business.hours has unknown day key "${k}" (expected one of ${HOURS_DAY_KEYS.join(", ")})`);
         }
     });
 }

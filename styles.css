@@ -279,8 +279,8 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     left: 0;
     right: 0;
     width: 100%;
-    height: 100vh;   /* fallback */
-    height: 100lvh;  /* LARGE viewport height: the tallest state (URL bar hidden), and it does NOT change as the bar slides — so no resize on scroll */
+    height: 100vh; /* fallback */
+    height: 100lvh; /* LARGE viewport height: the tallest state (URL bar hidden), and it does NOT change as the bar slides — so no resize on scroll */
     z-index: -2;
     pointer-events: none;
 }
@@ -957,7 +957,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
     }
 
     .link-list .handle {
-        margin-left: 0;            /* drop to its own line, align under label */
+        margin-left: 0; /* drop to its own line, align under label */
         flex-basis: 100%;
         text-align: left;
         padding-left: calc(2rem + 0.6rem); /* indent under the label, past the icon */
@@ -974,9 +974,17 @@ a.card__link:not(:has(.card__meta)):hover::after {
 
 /* Per-platform brand colors for contact-row icons. Brand colors, not theme
    tokens — intentionally identical in light and dark mode, and kept on hover. */
-.link-list--phone .link-list__icon { color: var(--brand-phone); }
-.link-list--email .link-list__icon { color: var(--brand-email); }
-.link-list--instagram .link-list__icon { color: var(--brand-instagram); }
+.link-list--phone .link-list__icon {
+    color: var(--brand-phone);
+}
+
+.link-list--email .link-list__icon {
+    color: var(--brand-email);
+}
+
+.link-list--instagram .link-list__icon {
+    color: var(--brand-instagram);
+}
 
 /* ---- Table (price list / structured rows) ----------------------------- */
 /* A structured table rendered by buildTable() in script.js from a `table`
@@ -1191,7 +1199,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
     display: block;
     /* gently match the site mood without breaking legibility */
     filter: saturate(0.95);
-    pointer-events: none;   /* view-only on all browsers; open via the button */
+    pointer-events: none; /* view-only on all browsers; open via the button */
 }
 
 /* ---- Map: static mode (no iframe, clean themed card) ------------------ */
@@ -1571,9 +1579,17 @@ a.card__link:not(:has(.card__meta)):hover::after {
 
 /* Optional hard column hints (data-columns="2|3|4"); still collapse on narrow
    viewports via the media query below. */
-.gallery__grid[data-columns="2"] { grid-template-columns: repeat(2, 1fr); }
-.gallery__grid[data-columns="3"] { grid-template-columns: repeat(3, 1fr); }
-.gallery__grid[data-columns="4"] { grid-template-columns: repeat(4, 1fr); }
+.gallery__grid[data-columns="2"] {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.gallery__grid[data-columns="3"] {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.gallery__grid[data-columns="4"] {
+    grid-template-columns: repeat(4, 1fr);
+}
 
 /* Each tile is a button so it's focusable/keyboard-openable. Strip button
    chrome; the image fills it. zoom-in cursor signals it opens the lightbox —
@@ -1623,39 +1639,55 @@ a.card__link:not(:has(.card__meta)):hover::after {
     visibility: hidden;
 }
 
-/* Optional per-tile caption strip. Clamped so a long caption can't make one
-   tile taller than its neighbors and break the grid rhythm. */
-.gallery__caption {
+/* Pager: prev / "page / total" / next. Sits centered under the grid; only
+   rendered when the set spans more than one page (engine.js). Uses the same
+   token language as the rest of the UI. */
+.gallery__pager {
     display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    padding: 0.55rem 0.7rem;
-    text-align: left;
-    background: var(--bg-panel);
-    border-top: 1px solid var(--border);
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.9rem;
 }
 
-.gallery__title {
-    font-family: var(--font-serif);
-    font-size: 1rem;
-    line-height: 1.2;
-    color: var(--text);
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-}
-
-.gallery__text {
-    font-size: 0.85rem;
-    line-height: 1.3;
+.gallery__pager-status {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
     color: var(--text-soft);
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    min-width: 3.5rem;
+    text-align: center;
+}
+
+.gallery__pager-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-panel);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform var(--transition), border-color var(--transition);
+}
+
+.gallery__pager-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+}
+
+.gallery__pager-btn:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.gallery__pager-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 /* Narrow screens: relax forced column counts to two so tiles stay tappable. */
@@ -1666,12 +1698,73 @@ a.card__link:not(:has(.card__meta)):hover::after {
     }
 }
 
-/* Touch browsers often keep :hover stuck after a tap, especially mobile Firefox.
-   Keep hover polish on desktop, but neutralize sticky hover state on touch.
+/* ----------------------------------------------------------------------
+   Opening hours block. A definition list rendered as label/value rows;
+   today's row is highlighted. Mirrors the panel/border token language used
+   by the table and gallery blocks.
+---------------------------------------------------------------------- */
+.hours__name {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
 
-   The map iframe is still visible on mobile, but non-interactive on touch.
-   That prevents Firefox/Android from hijacking random taps and opening Maps.
-   Users can intentionally open it via the explicit "Open in Maps" link. */
+.hours__blurb {
+    margin: 0 0 0.75rem;
+}
+
+.hours__list {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-panel);
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    backdrop-filter: blur(var(--panel-blur));
+}
+
+.hours__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0.85rem;
+    border-top: 1px solid var(--border);
+}
+
+.hours__row:first-child {
+    border-top: 0;
+}
+
+.hours__day {
+    margin: 0;
+    color: var(--text-soft);
+}
+
+.hours__value {
+    margin: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+
+/* Today's row: tinted background, accent edge, and a bolder day label so the
+   current day reads at a glance without needing a separate badge. */
+.hours__row.is-today {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.hours__row.is-today .hours__day {
+    color: var(--text);
+    font-weight: 600;
+}
+
+
+/* That prevents Firefox/Android from hijacking random taps and opening Maps.
+Users can intentionally open it via the explicit "Open in Maps" link. */
 @media (hover: none), (pointer: coarse) {
     .map-embed iframe {
         pointer-events: none;
@@ -1851,7 +1944,6 @@ span.footer__count {
 
        This is the ONLY place the card/stacking treatment lives — the base
        .data-table rules above stay a normal desktop table. */
-
     /* Neutralize the scroll frame: the cards carry their own borders now. */
     .table-scroll {
         overflow-x: visible;
@@ -2083,6 +2175,7 @@ body.lightbox-open {
 .lightbox:not(.is-open) {
     pointer-events: none;
 }
+
 /* ----------------------------------------------------------------------
    ERROR STATE — shown when site-spec.json can't be loaded/parsed and there
    is no inline content to fall back to. Append to styles.css. Uses the same

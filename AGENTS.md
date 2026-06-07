@@ -330,6 +330,18 @@ and show the error screen — serve locally with `python3 -m http.server 8000`.
       "dashboardUrl": "https://<site>.goatcounter.com"  // optional; makes the count a link
     }
   },
+  "business": {              // single source of truth for contact/legal data; blocks reference it by key
+    "legalName": "…",
+    "ico": "…", "dic": "…",  // company / tax IDs
+    "phone": "…", "email": "…",
+    "address": { "street": "…", "city": "…", "postalCode": "…", "country": "…", "label": "…" },
+    "mapUrl": "…", "mapEmbed": "…",   // used by the map block's fallback
+    "hours": {               // optional; rendered by the "hours" block, which highlights today
+      "mon": "9:00–17:00", "tue": "9:00–17:00", "wed": "9:00–17:00",
+      "thu": "9:00–17:00", "fri": "9:00–17:00",
+      "sat": "Na objednávku", "sun": "Zatvorené"   // free-form value strings; missing day → dash row
+    }
+  },
   "sections": [               // ORDERED — order IS the nav order AND the page order
     {
       "id": "home",           // unique; required; used in the URL hash + tab id
@@ -375,9 +387,12 @@ and wraps the result in a `<div class="block">`.
 ### Block types and their builders
 
 `renderBlock()` looks up `block.type` in the `BLOCK_RENDERERS` map and calls the
-matching `buildX(block)` function. Each builder is a **pure DOM builder** (reads
-only its `block` argument, never `SITE`) and returns a node, a fragment, or
-`null`. Current types:
+matching `buildX(block)` function. Most builders are **pure DOM builders** (read
+only their `block` argument, never `SITE`) and return a node, a fragment, or
+`null`. The exceptions read single-source-of-truth data from `SITE.business` via
+`getBusiness()`: `map` (address/embed fallback) and `hours` (the week of opening
+times). A new block should stay pure unless it renders SSOT business data.
+Current types:
 
 | `type`       | Builder          | Produces                                                                 |
 |--------------|------------------|--------------------------------------------------------------------------|
@@ -389,8 +404,9 @@ only its `block` argument, never `SITE`) and returns a node, a fragment, or
 | `slideshow`  | `buildCarousel`  | 1 slide = framed image; 2+ = carousel w/ prev/next, dots, ARIA, lightbox |
 | `table`      | `buildTable`     | structured table (price list etc.); last column accent-styled            |
 | `faq`        | `buildFaq`       | accordion of `items` of `{ q, a }`; native button toggles, ARIA-wired    |
-| `gallery`    | `buildGallery`   | responsive image grid (opt. `columns` 1–6); shares the slideshow lightbox|
+| `gallery`    | `buildGallery`   | paged responsive image grid (opt. `columns` 1–6, `perPage` default 12); image-only tiles; shares the slideshow lightbox across pages|
 | `photo`      | `buildPhoto`     | single-image sugar; normalizes to a one-image `gallery`                  |
+| `hours`      | `buildHours`     | opening hours; reads `business.hours` (SSOT), highlights the current day |
 
 The exact block shapes are documented in the long comment at the top of
 `engine.js` (the `BLOCK TYPES` section). Keep that comment in sync if you change
@@ -476,7 +492,7 @@ colors live as standalone rules, identical in light and dark mode:
   missing/empty `sections` degrades to the empty/error state instead of throwing.
 - `navItems()` — derives the tab list from `getSections()` (id + label).
 - Builders: `buildHero`, `buildText`, `buildCards`, `buildLinks`, `buildMap`,
-  `buildTable`, `buildCarousel` (slideshow), `buildGallery`, `buildPhoto`, `buildFaq`, plus
+  `buildTable`, `buildCarousel` (slideshow), `buildGallery`, `buildPhoto`, `buildHours`, `buildFaq`, plus
   `buildSocials` (header/drawer socials).
 - Dispatch: `BLOCK_RENDERERS`, `renderBlock()`,
   `buildSection()`, `renderContent()`.
