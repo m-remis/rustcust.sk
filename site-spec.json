@@ -523,14 +523,7 @@
               "text": "Rajec"
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "otvaracie-hodiny",
-      "label": "Otváracie hodiny",
-      "title": "Otváracie hodiny.",
-      "blocks": [
+        },
         {
           "type": "hours",
           "name": "Otváracie hodiny",
