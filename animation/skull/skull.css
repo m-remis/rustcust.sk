@@ -38,11 +38,6 @@
 /* blink is frame-driven (skull.js swaps the image through icon_blink_00..06),
    so there is no CSS blink animation. The .blink class is unused. */
 
-/* annoyed - recolor only, no positional shift */
-.header-skull.annoyed img {
-    filter: saturate(1.15);
-}
-
 /* dizzy - spin the wrapper 5 full turns. This REPLACES the idle float while
    active (one element can only run one `animation` at a time), then JS swaps
    to the dizzy frame when this animation ends. 5 turns over 1.5s. */
