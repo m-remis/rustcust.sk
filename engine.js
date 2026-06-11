@@ -35,8 +35,8 @@ import {initSkull} from "./animation/skull/skull.js";
    BLOCK TYPES (each block is an object with a "type"):
      { "type": "hero", "eyebrow", "title", "lead" }
      { "type": "text", "text": "Paragraph. Inline <em>…</em> and <a …> ok." }
-     { "type": "cards", "linked": false, "items": [ { "title","body","meta","url" } ] }
-     { "type": "links", "items": [ { "label","handle","url","icon" } ] }
+     { "type": "cards", "linked": false, "items": [ { "title","body","meta","url","image" } ] }
+     { "type": "links", "layout": "rows"|"grid", "use": ["phone","email",…], "items": [ { "label","handle","url","icon","kind" } ] }
      { "type": "map", "mode": "embed", "embed","url","label","address" }
      { "type": "slideshow", "name","blurb", "slides": [ { "src","title","caption","text" } ] }
      { "type": "table", "name","blurb", "headings": [...], "rows": [ [...], ... ] }
@@ -136,20 +136,31 @@ function getBusiness() {
 /* Strip spaces/formatting from a phone number to build a tel: href. */
 const telHref = (phone = "") => "tel:" + String(phone).replace(/[^\d+]/g, "");
 
+/* Slovak display names for what KIND of contact a row is ("Telefón" over the
+   number). Same hardcoded-Slovak precedent as the hours block's day names.
+   Used by resolveRef() for SSOT rows and as the icon-key fallback for inline
+   links items (an explicit item `kind` always wins). */
+const KIND_LABELS = {
+    phone: "Telefón",
+    email: "E-mail",
+    instagram: "Instagram",
+    youtube: "YouTube",
+};
+
 function resolveRef(key) {
     const b = getBusiness();
 
     if (key === "phone" && b.phone) {
-        return {label: b.phone, handle: "", url: telHref(b.phone), icon: "phone"};
+        return {label: b.phone, handle: "", url: telHref(b.phone), icon: "phone", kind: KIND_LABELS.phone};
     }
     if (key === "email" && b.email) {
-        return {label: b.email, handle: "", url: "mailto:" + b.email, icon: "email"};
+        return {label: b.email, handle: "", url: "mailto:" + b.email, icon: "email", kind: KIND_LABELS.email};
     }
 
     // Otherwise treat the key as a social icon key and pull from socials[].
     const social = (SITE.socials || []).find((s) => s && s.icon === key);
     if (social) {
-        return {label: social.label, handle: "", url: social.url, icon: social.icon};
+        return {label: social.label, handle: "", url: social.url, icon: social.icon, kind: KIND_LABELS[social.icon] || ""};
     }
 
     return null;
@@ -327,7 +338,10 @@ function buildText(block) {
 }
 
 /* cards — a responsive card grid. `linked: true` + an item `url` makes the
-   whole card a link. */
+   whole card a link. An item `image` paints the card with a background photo:
+   the path goes into the --card-bg custom property (never a hardcoded
+   background here) so styles.css owns the cover/veil treatment and the card
+   re-themes in light/dark for free. */
 function buildCards(block) {
     const items = block.items || [];
     if (!items.length) return null;
@@ -342,22 +356,36 @@ function buildCards(block) {
             ${it.meta ? `<span class="card__meta">${it.meta}</span>` : ""}
         `;
 
+        // Optional background photo. Quote/backslash are escaped so the path
+        // is always a valid CSS url("...") string; the panel color stays
+        // underneath as the loading / missing-image fallback.
+        const image = typeof it.image === "string" ? it.image.trim() : "";
+        const cardClass = image ? "card card--bg" : "card";
+        const styleAttr = image
+            ? `--card-bg: url("${image.replace(/["\\]/g, "\\$&")}")`
+            : null;
+
         if (linked && it.url) {
-            const attrs = {class: "card card__link", href: it.url};
+            const attrs = {class: `${cardClass} card__link`, href: it.url, style: styleAttr};
             if (isExternalUrl(it.url)) {
                 attrs.target = "_blank";
                 attrs.rel = "noopener noreferrer";
             }
             grid.appendChild(el("a", attrs, inner));
         } else {
-            grid.appendChild(el("article", {class: "card"}, inner));
+            grid.appendChild(el("article", {class: cardClass, style: styleAttr}, inner));
         }
     });
 
     return grid;
 }
 
-/* links — the label/handle link list (e.g. contact rows). */
+/* links — the contact/social link rows.
+   Row anatomy: icon | (kind label over value) | optional handle | arrow cue.
+   The kind ("Telefón", "Instagram", …) comes from KIND_LABELS via the icon
+   key, or an explicit item `kind`; the persistent arrow is the same
+   clickability cue redirect cards use, so rows never need explaining.
+   `layout: "grid"` renders the rows as side-by-side tiles instead. */
 function buildLinks(block) {
     // Resolve `use: ["phone","email","instagram"]` against business/socials —
     // the SSOT path — then append any explicit inline items after them.
@@ -367,9 +395,11 @@ function buildLinks(block) {
     const items = fromRefs.concat(block.items || []);
     if (!items.length) return null;
 
-    const ul = el("ul", {class: "link-list"});
+    const ul = el("ul", {class: `link-list${block.layout === "grid" ? " link-list--grid" : ""}`});
 
     items.forEach((it) => {
+        if (!it || !it.url) return;
+
         const attrs = {
             href: it.url,
             class: it.icon ? `link-list--${it.icon}` : null,
@@ -384,10 +414,19 @@ function buildLinks(block) {
             ? `<span class="link-list__icon" aria-hidden="true">${SOCIAL_ICONS[it.icon]}</span>`
             : "";
 
+        // Small muted "what is this" line above the value. Explicit item
+        // `kind` wins; otherwise derived from the icon key. Optional.
+        const kind = it.kind || KIND_LABELS[it.icon] || "";
+        const kindHtml = kind ? `<span class="link-list__kind">${sanitizeInline(String(kind))}</span>` : "";
+        const labelHtml = it.label ? `<span class="label">${sanitizeInline(String(it.label))}</span>` : "";
+        // Only render the handle span when there is one — an empty span here
+        // breaks the :has() spacing in CSS (and `undefined` used to leak in).
+        const handleHtml = it.handle ? `<span class="handle">${sanitizeInline(String(it.handle))}</span>` : "";
+
         const a = el(
             "a",
             attrs,
-            `${icon}<span class="label">${it.label}</span><span class="handle">${it.handle}</span>`
+            `${icon}<span class="link-list__text">${kindHtml}${labelHtml}</span>${handleHtml}<span class="link-list__arrow" aria-hidden="true"></span>`
         );
 
         const li = el("li");
@@ -395,7 +434,7 @@ function buildLinks(block) {
         ul.appendChild(li);
     });
 
-    return ul;
+    return ul.children.length ? ul : null;
 }
 
 /* map — location block with two modes:

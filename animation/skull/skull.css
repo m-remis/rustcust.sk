@@ -43,14 +43,6 @@
     filter: saturate(1.15);
 }
 
-/* angry - recolor + glow only, no positional shift */
-.header-skull.angry img {
-    filter:
-            saturate(1.5)
-            brightness(0.95)
-            drop-shadow(0 0 10px rgba(255, 0, 120, 0.35));
-}
-
 /* dizzy - spin the wrapper 5 full turns. This REPLACES the idle float while
    active (one element can only run one `animation` at a time), then JS swaps
    to the dizzy frame when this animation ends. 5 turns over 1.5s. */

@@ -605,7 +605,9 @@ function checkCardsBlock(block, where, sectionIds) {
             checkDuplicateValue(seenTitles, item.title, "content", "DUPLICATE_CARD_TITLE", `${iw} duplicates card title`);
         }
 
-        if (!hasNonEmptyString(item.body)) {
+        // A card with a background image is complete with just title + meta —
+        // the photo does the body's job. Only nag on plain text cards.
+        if (!hasNonEmptyString(item.body) && !hasNonEmptyString(item.image)) {
             warn("content", "CARD_MISSING_BODY", `${iw} has no body`);
         }
 
@@ -620,6 +622,11 @@ function checkCardsBlock(block, where, sectionIds) {
 function checkLinksBlock(block, where, sectionIds) {
     const use = Array.isArray(block.use) ? block.use : [];
     const items = Array.isArray(block.items) ? block.items : [];
+
+    if (block.layout != null && block.layout !== "rows" && block.layout !== "grid") {
+        warn("spec", "LINKS_BAD_LAYOUT",
+            `${where} (links) has unknown layout "${block.layout}" (expected "rows" | "grid") — the engine falls back to rows`);
+    }
 
     // The engine builds rows from `use` (SSOT refs into business/socials) AND
     // any inline `items`, in that order. Empty only if BOTH are empty.

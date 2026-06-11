@@ -175,13 +175,19 @@ Per-block placeholders to hunt down for a new client:
 - [ ] **`text`** — replace any template prose. `<em>`/`<a>` allowed. If a `text`
   block has a real outbound link, make sure it's the client's, not the
   template author's.
-- [ ] **`cards`** — `items[]` of `{ title, body, meta?, url? }`. With
+- [ ] **`cards`** — `items[]` of `{ title, body, meta?, url?, image? }`. With
   `linked: true`, each card with a `url` becomes a link; replace `#`/dummy URLs.
+  An `image` path paints the card with a background photo behind a theme-aware
+  veil — point it at a real file in `assets/`.
 - [ ] **`links`** (contact rows) — prefer **`use`**: a list of keys resolved
   against `business`/`socials` (e.g. `"use": ["phone","email","instagram"]`),
   so a number/handle is typed once in `business` and reused. You can also add
-  explicit `items[]` of `{ label, handle, url, icon? }`. A `use` key that
-  matches nothing is warned (`LINK_USE_UNRESOLVED`). **Replace the template
+  explicit `items[]` of `{ label, handle, url, icon?, kind? }`. A `use` key that
+  matches nothing is warned (`LINK_USE_UNRESOLVED`). Rows show a small kind
+  label ("Telefón", "Instagram", …) over the value automatically for known
+  icons — set `kind` on inline items to control it. `"layout": "grid"` renders
+  up to a handful of contacts as side-by-side tiles instead of stacked rows.
+  **Replace the template
   `r@r.sk` / `+421 000 000 00` defaults in `business`** — both are caught as
   fake by `launch-check`.
 - [ ] **`map`** — `mode: "embed"` (Google Maps → Share → Embed → copy the

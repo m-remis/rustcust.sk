@@ -398,8 +398,8 @@ Current types:
 |--------------|------------------|--------------------------------------------------------------------------|
 | `hero`       | `buildHero`      | eyebrow + big `<h1>` headline + lead paragraph                           |
 | `text`       | `buildText`      | a `.prose` paragraph (trusted inline `<em>`/`<a>` allowed)               |
-| `cards`      | `buildCards`     | responsive card grid; `linked: true` + item `url` makes each a link      |
-| `links`      | `buildLinks`     | label/handle link rows (e.g. contact), with optional leading icon        |
+| `cards`      | `buildCards`     | responsive card grid; `linked: true` + item `url` makes each a link; item `image` adds a veiled background photo |
+| `links`      | `buildLinks`     | contact link rows: icon, kind label over value, arrow cue; `layout: "grid"` = tiles |
 | `map`        | `buildMap`       | `mode: "embed"` live iframe, or `mode: "static"` themed address card     |
 | `slideshow`  | `buildCarousel`  | 1 slide = framed image; 2+ = carousel w/ prev/next, dots, ARIA, lightbox |
 | `table`      | `buildTable`     | structured table (price list etc.); last column accent-styled            |

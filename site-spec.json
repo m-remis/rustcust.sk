@@ -23,7 +23,7 @@
       "wed": "9:00–17:00",
       "thu": "9:00–17:00",
       "fri": "9:00–17:00",
-      "sat": "Na objednávku",
+      "sat": "Zatvorené",
       "sun": "Zatvorené"
     }
   },
@@ -76,20 +76,23 @@
           "items": [
             {
               "title": "Servis",
-              "body": "Diagnostika, nastavenie, umývanie, opravy bicyklov, ručný servis lyží a snowboardov v zimnom období.",
+              "body": "",
               "meta": "Cenník a podmienky",
+              "image": "assets/buttons/service.png",
               "url": "#servis"
             },
             {
               "title": "Guiding",
-              "body": "Lokálne výjazdy, bikeškola a sprevádzanie po trasách v okolí Rajca a Rajeckej doliny.",
+              "body": "",
               "meta": "Balíky a rezervácia",
+              "image": "assets/buttons/guiding.png",
               "url": "#guiding"
             },
             {
               "title": "Custom",
-              "body": "Zákazkové úpravy, prestavby retro bicyklov, custom sedlá a drobnosti na mieru.",
+              "body": "",
               "meta": "Projekty a úpravy",
+              "image": "assets/buttons/custom.png",
               "url": "#custom"
             }
           ]
@@ -456,12 +459,7 @@
       "title": "Galéria.",
       "blocks": [
         {
-          "type": "text",
-          "text": "Výber z dielne, hotových projektov a výjazdov. (tu rozhoduje Kvalita > Kvantita fotiek, cisto nejaky namakany vyber)"
-        },
-        {
           "type": "gallery",
-          "name": "Moja práca",
           "blurb": "Klikni na obrázok pre zväčšenie.",
           "columns": 3,
           "images": [
@@ -547,10 +545,11 @@
       "blocks": [
         {
           "type": "text",
-          "text": "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme. (Tu funguju prekliky na kontakty)"
+          "text": "Napíš, zavolaj alebo sa ozvi cez Instagram. Určite sa dohodneme."
         },
         {
           "type": "links",
+          "layout": "grid",
           "use": [
             "phone",
             "email",
@@ -597,10 +596,8 @@
     }
   ],
   "backgrounds": [
-    "assets/background/background.jpg",
-    "assets/background/background_2.jpg",
-    "assets/background/background_3.jpg",
-    "assets/background/background_4.jpg",
-    "assets/background/background_5.jpg"
+    "assets/background/background_normal.png",
+    "assets/background/background_inverted.png",
+    "assets/background/background.jpg"
   ]
 }

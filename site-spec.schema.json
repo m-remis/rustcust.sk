@@ -228,7 +228,8 @@
               "title": { "type": "string", "minLength": 1 },
               "body": { "type": "string" },
               "meta": { "type": "string", "description": "Small accent label (shows a go-arrow on linked cards)." },
-              "url": { "type": "string", "description": "Link target; required if the card should be clickable." }
+              "url": { "type": "string", "description": "Link target; required if the card should be clickable." },
+              "image": { "type": "string", "description": "Optional background photo (local path or URL); rendered under a theme-aware veil so the card text stays readable." }
             }
           }
         }
@@ -245,6 +246,7 @@
       ],
       "properties": {
         "type": { "const": "links" },
+        "layout": { "enum": ["rows", "grid"], "description": "rows (default) = stacked full-width rows; grid = side-by-side tiles (auto-stacks when narrow)." },
         "use": {
           "type": "array",
           "description": "Keys resolved against business/socials, e.g. \"phone\", \"email\", \"instagram\".",
@@ -260,7 +262,8 @@
               "label": { "type": "string" },
               "handle": { "type": "string" },
               "url": { "type": "string", "minLength": 1 },
-              "icon": { "type": "string", "description": "Icon key (must match SOCIAL_ICONS in engine.js)." }
+              "icon": { "type": "string", "description": "Icon key (must match SOCIAL_ICONS in engine.js)." },
+              "kind": { "type": "string", "description": "Small muted line above the value (\"Telefón\", \"Web\", …). Defaults from the icon key for known icons." }
             }
           }
         }
