@@ -65,6 +65,8 @@
     --dot-fill-hover: rgba(255, 255, 255, 0.35);
 
     --carousel-chip-text: #f4f5f8;
+
+    --border-solid: #979797;
 }
 
 /* Dark (default) — only tokens that DIFFER from light live here. Shared,
@@ -828,7 +830,7 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     padding: 1.35rem 1.4rem;
     background: var(--bg-panel);
     backdrop-filter: blur(var(--panel-blur));
-    border: 3px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: var(--radius);
     /* transform uses a short ease-OUT (fast start, gentle settle) so the 3px
        lift feels crisp, not draggy; border-color keeps the shared curve. The
@@ -858,14 +860,11 @@ a.card__link:hover {
     background-image: linear-gradient(var(--card-veil-top), var(--card-veil-bottom)), var(--card-bg);
     background-size: cover;
     background-position: center;
-    /* By default a background paints under the border area too
-       (background-clip: border-box). The card border is translucent, so over
-       a photo it mixes with random image pixels and looks muddy — clip the
-       photo to the padding box so the 2px border renders clean over the
-       page, exactly like a plain card's. */
-    background-clip: padding-box;
-    /* The photo makes the card effectively opaque — blurring the page behind
-       it would be invisible, wasted compositing work. */
+    /* Photo paints to the OUTER edge (border-box, the default) — no
+       padding-box clip, so no Firefox sub-pixel ring at the radius. The
+       border is opaque here instead, so it still doesn't mix with photo
+       pixels the way the translucent token would. */
+    border-color: var(--border-solid);
     backdrop-filter: none;
 }
 
