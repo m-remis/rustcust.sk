@@ -1426,33 +1426,35 @@ a.card__link:not(:has(.card__meta)):hover::after {
     background: var(--bg-panel);
     backdrop-filter: blur(var(--panel-blur));
 
-    /* One canonical slideshow shape.
-       All slideshows use this frame size, and changing slides can no longer
-       resize the page based on image dimensions or caption length. */
+    /* One canonical IMAGE shape. The chin (caption) is no longer a hardcoded
+       height: slides are grid-stacked in the viewport below, so the frame is
+       image (fixed ratio) + the tallest caption in this carousel. Still no
+       per-slide jumping — the container is sized by the tallest slide, once,
+       and never resizes as slides change. */
     --carousel-ratio: 16 / 10;
-    --carousel-caption-height: clamp(4.4rem, 11vw, 5.75rem);
 }
 
 .carousel__viewport {
-    position: relative;
-    /* Fixed frame. The slide content must fit inside this, not resize it. */
-    aspect-ratio: var(--carousel-ratio);
+    /* Grid-stacking replaces the old absolute/inset-0 stack. Every slide
+       occupies the same 1/1 cell, so they overlap for the crossfade AND the
+       container auto-sizes to the tallest slide. This is what lets captions
+       be content-sized (no fixed --carousel-caption-height) without the
+       slideshow resizing between slides. */
+    display: grid;
     background: var(--bg-panel-solid);
     overflow: hidden;
 }
 
-/* Slides stack inside one fixed frame; only the active one shows.
-   Important: active/single slides stay absolute too. If they become relative,
-   their caption/image content can resize the viewport and the whole slideshow
-   starts jumping again. */
+/* All slides stay in the stack; opacity shows/hides. A slide is a 2-row grid:
+   row 1 = image at the canonical ratio, row 2 = chin, which flexes to fill
+   whatever the tallest caption claimed — so chins match across slides. */
 .carousel__slide {
-    position: absolute;
-    inset: 0;
-    height: 100%;
+    grid-area: 1 / 1;
+    min-width: 0;
     margin: 0;
 
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
 
     /* Keep all slides in the stack.
        Opacity handles showing/hiding.
@@ -1468,11 +1470,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
 .carousel--single .carousel__slide {
     opacity: 1;
     pointer-events: auto;
-}
-
-.carousel__slide.is-active,
-.carousel--single .carousel__slide {
-    opacity: 1;
     visibility: visible;
 }
 
@@ -1483,12 +1480,13 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 /* Expand button wraps the image so it's a real, focusable control that opens
-   the lightbox. It must behave like the image did: fill the top grid row, no
-   button chrome. zoom-in cursor hints it's clickable. */
+   the lightbox. The canonical ratio now lives HERE, not on the viewport —
+   the image area is the fixed part of the frame, the chin is the flexible
+   part. zoom-in cursor hints it's clickable. */
 .carousel__expand {
     grid-row: 1;
     width: 100%;
-    height: 100%;
+    aspect-ratio: var(--carousel-ratio);
     min-height: 0;
     padding: 0;
     margin: 0;
@@ -1525,7 +1523,12 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 /* Caption / chin.
-   Uses normal site theme tokens, not hardcoded photo-overlay colors. */
+   Uses normal site theme tokens, not hardcoded photo-overlay colors.
+
+   Content-sized: the line-clamps below are the ceiling, not a fixed pixel
+   height. The old fixed height (clamp + vw) was smaller than 1 title line +
+   2 text lines on phones, and justify-content: center clipped the overflow
+   on BOTH edges — that was the sliced-title / mid-word-cut bug. */
 .carousel__caption {
     z-index: 2;
 
@@ -1534,9 +1537,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
     justify-content: center;
     gap: 0.15rem;
 
-    height: var(--carousel-caption-height);
-    min-height: var(--carousel-caption-height);
-    max-height: var(--carousel-caption-height);
+    min-height: 3rem; /* small floor so a one-liner chin doesn't look pinched */
 
     padding: 0.7rem 0.85rem;
     overflow: hidden;
@@ -1568,8 +1569,8 @@ a.card__link:not(:has(.card__meta)):hover::after {
     color: var(--text-faint);
 }
 
-/* Fixed-size carousel means captions cannot be allowed to grow forever.
-   Long text is clipped inside the reserved chin instead of resizing the frame. */
+/* Line-clamps are now the ONLY cap on caption size. Overflow past the clamp
+   ends on a line boundary with an ellipsis — never a sliced glyph. */
 .carousel__title,
 .carousel__text,
 .carousel__subtext {
@@ -1670,7 +1671,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
 @media (max-width: 640px) {
     .carousel {
         --carousel-ratio: 4 / 3;
-        --carousel-caption-height: clamp(4.75rem, 22vw, 6.25rem);
+        /* --carousel-caption-height removed — the chin is content-sized now */
     }
 
     .carousel__nav {
