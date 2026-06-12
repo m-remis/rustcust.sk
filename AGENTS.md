@@ -313,6 +313,7 @@ and show the error screen — serve locally with `python3 -m http.server 8000`.
 ```jsonc
 {
   "brand": "RustCust",
+  "brandImage": "assets/logo.png", // optional: PNG logo replaces the header text; "brand" still feeds alt text + footer
   "meta": {
     "lang": "sk",
     "domain": "https://www.rustcust.sk/",
@@ -398,7 +399,7 @@ Current types:
 |--------------|------------------|--------------------------------------------------------------------------|
 | `hero`       | `buildHero`      | eyebrow + big `<h1>` headline + lead paragraph                           |
 | `text`       | `buildText`      | a `.prose` paragraph (trusted inline `<em>`/`<a>` allowed)               |
-| `cards`      | `buildCards`     | responsive card grid; `linked: true` + item `url` makes each a link; item `image` adds a veiled background photo |
+| `cards`      | `buildCards`     | responsive card grid; `linked: true` + item `url` makes each a link; item `icon` adds a monochrome icon (black-on-transparent PNG, dark-theme auto-invert) |
 | `links`      | `buildLinks`     | contact link rows: icon, kind label over value, arrow cue; `layout: "grid"` = tiles |
 | `map`        | `buildMap`       | `mode: "embed"` live iframe, or `mode: "static"` themed address card     |
 | `slideshow`  | `buildCarousel`  | 1 slide = framed image; 2+ = carousel w/ prev/next, dots, ARIA, lightbox |

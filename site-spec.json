@@ -2,6 +2,7 @@
   "$schema": "./site-spec.schema.json",
   "schemaVersion": "1.0.0",
   "brand": "RustCust",
+  "brandImage": "assets/logo/rustcust_black_transparent.png",
   "business": {
     "legalName": "RustCust – cyklodielňa",
     "ico": "0",
@@ -67,10 +68,6 @@
           "lead": "Work in progress web"
         },
         {
-          "type": "text",
-          "text": "RustCust je malá cyklodielňa v Rajci. Namiesto anonymného servisu ponúka osobný prístup, praktické riešenia a prácu, ktorú je vidieť na výsledku."
-        },
-        {
           "type": "cards",
           "linked": true,
           "items": [
@@ -78,21 +75,21 @@
               "title": "Servis",
               "body": "",
               "meta": "Cenník a podmienky",
-              "image": "assets/buttons/service.png",
+              "icon": "assets/buttons/servis_circle_transparent.png",
               "url": "#servis"
             },
             {
               "title": "Guiding",
               "body": "",
               "meta": "Balíky a rezervácia",
-              "image": "assets/buttons/guiding.png",
+              "icon": "assets/buttons/guiding_cykloskola_circle_transparent.png",
               "url": "#guiding"
             },
             {
               "title": "Custom",
               "body": "",
               "meta": "Projekty a úpravy",
-              "image": "assets/buttons/custom.png",
+              "icon": "assets/buttons/custom_circle_transparent.png",
               "url": "#custom"
             }
           ]
@@ -590,7 +587,6 @@
   ],
   "backgrounds": [
     "assets/background/background_normal.png",
-    "assets/background/background_inverted.png",
-    "assets/background/background.jpg"
+    "assets/background/background_inverted.png"
   ]
 }

@@ -605,10 +605,14 @@ function checkCardsBlock(block, where, sectionIds) {
             checkDuplicateValue(seenTitles, item.title, "content", "DUPLICATE_CARD_TITLE", `${iw} duplicates card title`);
         }
 
-        // A card with a background image is complete with just title + meta —
-        // the photo does the body's job. Only nag on plain text cards.
-        if (!hasNonEmptyString(item.body) && !hasNonEmptyString(item.image)) {
+        // An icon-led nav card is complete with just icon + title + meta —
+        // it works as a visual button. Only nag on plain text cards.
+        if (!hasNonEmptyString(item.body) && !hasNonEmptyString(item.icon)) {
             warn("content", "CARD_MISSING_BODY", `${iw} has no body`);
+        }
+
+        if (hasNonEmptyString(item.image)) {
+            fail("spec", "CARD_IMAGE_REMOVED", `${iw} uses "image" — card background photos were removed; use "icon" (monochrome black PNG on transparent) instead`);
         }
 
         if (block.linked && !item.url) {

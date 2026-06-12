@@ -65,8 +65,6 @@
     --dot-fill-hover: rgba(255, 255, 255, 0.35);
 
     --carousel-chip-text: #f4f5f8;
-
-    --border-solid: #979797;
 }
 
 /* Dark (default) — only tokens that DIFFER from light live here. Shared,
@@ -99,11 +97,11 @@
     --overlay-bottom: rgba(14, 15, 19, 0.98);
     --header-bg: rgba(14, 15, 19, 0.82);
 
-    /* — Card background-photo veil (.card--bg) —
-       Lighter than the page overlay: at card size the photo should stay
-       visible while title/body keep their normal contrast on top of it. */
-    --card-veil-top: rgba(14, 15, 19, 0.47);
-    --card-veil-bottom: rgba(0, 0, 0, 0.82);
+    /* — Monochrome icon/logo inversion —
+       Card icons and the optional header logo are black PNGs on transparent
+       (same style as the skull badge). Black art is invisible on the dark
+       theme, so dark inverts it to white; light leaves it untouched. */
+    --mono-icon-filter: invert(1);
 }
 
 /* Light — only tokens that DIFFER from dark; shared tokens are in :root. */
@@ -134,15 +132,13 @@
     /* — Background-image overlay & header —
        Heavier than dark: pushes the background photo back so cards/text read
        cleanly in light mode while still showing the image. */
-    --overlay-top: rgba(255, 255, 255, 0.85);
+    --overlay-top: rgba(255, 255, 255, 0.47);
     --overlay-bottom: rgba(255, 255, 255, 0.62);
     --header-bg: rgba(255, 255, 255, 0.90);
 
-    /* — Card background-photo veil (.card--bg) —
-       Heavier at the top (where the title sits), like the page overlay,
-       but lighter overall so the photo still reads at card size. */
-    --card-veil-top: rgba(255, 255, 255, 0);
-    --card-veil-bottom: rgb(255, 255, 255);
+    /* — Monochrome icon/logo inversion —
+       Black art already reads on the white theme — no filter. */
+    --mono-icon-filter: none;
 }
 
 /* ---- Reset-ish -------------------------------------------------------- */
@@ -384,6 +380,27 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
 
 .brand:hover {
     opacity: 0.7;
+}
+
+/* Brand as a PNG logo — set by renderNav() when the spec has `brandImage`.
+   The image is height-bound to roughly the text brand's visual size so the
+   header layout and header-fit math stay unchanged; width follows the asset's
+   aspect ratio. Monochrome black logos get the same dark-theme inversion as
+   card icons via --mono-icon-filter. */
+.brand--image {
+    display: flex;
+    align-items: center;
+}
+
+.brand__img {
+    display: block;
+    height: 2.1rem;
+    width: auto;
+    max-width: 8rem;
+    object-fit: contain;
+    filter: var(--mono-icon-filter);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .nav-desktop {
@@ -851,21 +868,43 @@ a.card__link:hover {
     border-color: var(--accent);
 }
 
-/* Card with a background photo — set by buildCards() when an item has an
-   `image`. The photo arrives as the --card-bg custom property; this rule
-   layers a theme-aware veil over it (same idea as the page overlay) so the
-   normal text tokens stay readable on any photo, in both themes. The panel
-   color from .card stays underneath as the loading / missing-image fallback. */
-.card--bg {
-    background-image: linear-gradient(var(--card-veil-top), var(--card-veil-bottom)), var(--card-bg);
-    background-size: cover;
-    background-position: center;
-    /* Photo paints to the OUTER edge (border-box, the default) — no
-       padding-box clip, so no Firefox sub-pixel ring at the radius. The
-       border is opaque here instead, so it still doesn't mix with photo
-       pixels the way the translucent token would. */
-    border-color: var(--border-solid);
-    backdrop-filter: none;
+/* Card icon — set by buildCards() when an item has an `icon`: a monochrome
+   black-on-transparent PNG (skull-badge style), sat to the LEFT of the text
+   and vertically centered against it (.card--icon switches the card from the
+   default column to a row). The --mono-icon-filter token inverts it to white
+   in dark theme and leaves it alone in light, so one asset works on both
+   themes. */
+.card--icon {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.1rem;
+}
+
+.card__icon {
+    display: block;
+    width: 4rem;
+    height: 4rem;
+    flex: none;
+}
+
+.card__icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: var(--mono-icon-filter);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* The text column inside an icon card. Mirrors the plain card's column flow
+   so .card__meta's margin-top:auto (stick to bottom) keeps working; min-width
+   lets long titles wrap instead of pushing the icon out of the card. */
+.card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
 }
 
 .card h3 {
@@ -891,7 +930,7 @@ a.card__link {
    (no hover on mobile) — not just on desktop hover. The arrow rides on the
    accent meta line and nudges right on hover. */
 a.card__link .card__meta::after {
-    content: var(--unicode-arrow); /* Link list (where to find me / contact) */
+    /* content: var(--unicode-arrow); /* Link list (where to find me / contact) */
     margin-left: 0.4rem;
     display: inline-block;
     font-size: 2.5em;
@@ -908,7 +947,7 @@ a.card__link:hover .card__meta::after {
    itself, so the cue is guaranteed regardless of content. (The card is
    position:relative above to anchor this.) */
 a.card__link:not(:has(.card__meta))::after {
-    content: var(--unicode-arrow);
+    /* content: var(--unicode-arrow); */
     position: absolute;
     top: 1.1rem;
     right: 1.2rem;
@@ -998,7 +1037,7 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 .link-list__arrow::after {
-    content: var(--unicode-arrow);
+    /* content: var(--unicode-arrow); */
     font-size: 1.5rem;
     line-height: 1;
 }

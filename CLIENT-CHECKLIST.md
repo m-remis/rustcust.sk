@@ -108,6 +108,12 @@ node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"
 
 - [ ] **`brand`** — the business name. Appears in the header and footer and is
   reused in the metadata strings (§1b). One value, rendered in many places.
+- [ ] **`brandImage`** *(optional)* — path to a logo PNG (e.g.
+  `assets/logo.png`) that replaces the header brand **text**. Keep `brand` set:
+  it becomes the logo's alt text and still drives the footer copyright and
+  metadata. A monochrome black-on-transparent logo is auto-inverted to white in
+  dark theme (same `--mono-icon-filter` as card icons); a colored logo needs
+  that filter overridden for `.brand__img` in `styles.css`.
 - [ ] **`footer.note`** — footer tagline. `footer.year` is optional; the engine
   fills the current year if you omit it.
 - [ ] **`socials[]`** — array of `{ label, icon, url }`. Give each a **distinct
@@ -175,10 +181,12 @@ Per-block placeholders to hunt down for a new client:
 - [ ] **`text`** — replace any template prose. `<em>`/`<a>` allowed. If a `text`
   block has a real outbound link, make sure it's the client's, not the
   template author's.
-- [ ] **`cards`** — `items[]` of `{ title, body, meta?, url?, image? }`. With
+- [ ] **`cards`** — `items[]` of `{ title, body, meta?, url?, icon? }`. With
   `linked: true`, each card with a `url` becomes a link; replace `#`/dummy URLs.
-  An `image` path paints the card with a background photo behind a theme-aware
-  veil — point it at a real file in `assets/`.
+  An `icon` path adds a monochrome icon to the left of the text (vertically centered) — a **black PNG on a
+  transparent background** (skull-badge style), pointing at a real file in
+  `assets/`. It is auto-inverted to white in dark theme, so one asset covers
+  both themes. Cards do not take background photos.
 - [ ] **`links`** (contact rows) — prefer **`use`**: a list of keys resolved
   against `business`/`socials` (e.g. `"use": ["phone","email","instagram"]`),
   so a number/handle is typed once in `business` and reused. You can also add

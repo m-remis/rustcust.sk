@@ -18,8 +18,12 @@
     },
     "brand": {
       "type": "string",
-      "description": "Brand / site name shown in the header.",
+      "description": "Brand / site name. Shown as the header text unless brandImage is set; always used for the footer copyright and as the logo's alt text.",
       "minLength": 1
+    },
+    "brandImage": {
+      "type": "string",
+      "description": "Optional logo image path (e.g. assets/logo.png) that replaces the header brand text. Monochrome black-on-transparent PNGs are auto-inverted in dark theme. brand stays required as alt text / copyright."
     },
     "business": { "$ref": "#/$defs/business" },
     "meta": { "$ref": "#/$defs/meta" },
@@ -229,7 +233,7 @@
               "body": { "type": "string" },
               "meta": { "type": "string", "description": "Small accent label (shows a go-arrow on linked cards)." },
               "url": { "type": "string", "description": "Link target; required if the card should be clickable." },
-              "image": { "type": "string", "description": "Optional background photo (local path or URL); rendered under a theme-aware veil so the card text stays readable." }
+              "icon": { "type": "string", "description": "Optional monochrome icon shown to the left of the text, vertically centered — a black PNG on a transparent background (skull-badge style). Auto-inverted to white in dark theme; one asset works on both themes." }
             }
           }
         }

@@ -35,7 +35,7 @@ import {initSkull} from "./animation/skull/skull.js";
    BLOCK TYPES (each block is an object with a "type"):
      { "type": "hero", "eyebrow", "title", "lead" }
      { "type": "text", "text": "Paragraph. Inline <em>…</em> and <a …> ok." }
-     { "type": "cards", "linked": false, "items": [ { "title","body","meta","url","image" } ] }
+     { "type": "cards", "linked": false, "items": [ { "title","body","meta","url","icon" } ] }
      { "type": "links", "layout": "rows"|"grid", "use": ["phone","email",…], "items": [ { "label","handle","url","icon","kind" } ] }
      { "type": "map", "mode": "embed", "embed","url","label","address" }
      { "type": "slideshow", "name","blurb", "slides": [ { "src","title","caption","text" } ] }
@@ -338,10 +338,11 @@ function buildText(block) {
 }
 
 /* cards — a responsive card grid. `linked: true` + an item `url` makes the
-   whole card a link. An item `image` paints the card with a background photo:
-   the path goes into the --card-bg custom property (never a hardcoded
-   background here) so styles.css owns the cover/veil treatment and the card
-   re-themes in light/dark for free. */
+   whole card a link. An item `icon` adds a monochrome icon (a black PNG on a
+   transparent background, skull-badge style) to the left of the text,
+   vertically centered; styles.css owns
+   the sizing and the dark-theme inversion (--mono-icon-filter), so one asset
+   re-themes in light/dark for free. Cards have no background photos. */
 function buildCards(block) {
     const items = block.items || [];
     if (!items.length) return null;
@@ -350,30 +351,36 @@ function buildCards(block) {
     const grid = el("div", {class: "card-grid"});
 
     items.forEach((it) => {
-        const inner = `
+        // Optional monochrome icon (black PNG on transparent, like the skull
+        // badge), shown to the LEFT of the text, vertically centered. The
+        // text (title/body/meta) is wrapped in .card__body so the card can
+        // switch to a row layout (.card--icon) without breaking the meta's
+        // stick-to-bottom behavior on plain cards. CSS inverts the icon in
+        // dark theme via --mono-icon-filter so black art stays visible on
+        // both themes. Decorative: alt is empty, the title carries meaning.
+        const icon = typeof it.icon === "string" ? it.icon.trim() : "";
+
+        const text = `
             <h3>${it.title}</h3>
             <p>${it.body}</p>
             ${it.meta ? `<span class="card__meta">${it.meta}</span>` : ""}
         `;
 
-        // Optional background photo. Quote/backslash are escaped so the path
-        // is always a valid CSS url("...") string; the panel color stays
-        // underneath as the loading / missing-image fallback.
-        const image = typeof it.image === "string" ? it.image.trim() : "";
-        const cardClass = image ? "card card--bg" : "card";
-        const styleAttr = image
-            ? `--card-bg: url("${image.replace(/["\\]/g, "\\$&")}")`
-            : null;
+        const inner = icon
+            ? `<span class="card__icon" aria-hidden="true"><img src="${icon.replace(/"/g, "&quot;")}" alt="" loading="lazy"/></span><div class="card__body">${text}</div>`
+            : text;
+
+        const cardClass = icon ? "card card--icon" : "card";
 
         if (linked && it.url) {
-            const attrs = {class: `${cardClass} card__link`, href: it.url, style: styleAttr};
+            const attrs = {class: `${cardClass} card__link`, href: it.url};
             if (isExternalUrl(it.url)) {
                 attrs.target = "_blank";
                 attrs.rel = "noopener noreferrer";
             }
             grid.appendChild(el("a", attrs, inner));
         } else {
-            grid.appendChild(el("article", {class: cardClass, style: styleAttr}, inner));
+            grid.appendChild(el("article", {class: cardClass}, inner));
         }
     });
 
@@ -1278,7 +1285,24 @@ function renderNav() {
 
     if (!desktop || !mobile || !brand) return;
 
-    brand.textContent = SITE.brand;
+    // Header brand: text by default; an optional spec-level `brandImage`
+    // (e.g. a PNG logo) replaces the text visually. The brand string still
+    // matters — it becomes the image's alt, and keeps feeding the footer
+    // copyright and metadata, so it stays the single source of truth for the
+    // name. Monochrome black-on-transparent logos are auto-inverted in dark
+    // theme by CSS (--mono-icon-filter on .brand__img).
+    const brandImage = typeof SITE.brandImage === "string" ? SITE.brandImage.trim() : "";
+    if (brandImage) {
+        brand.textContent = "";
+        brand.classList.add("brand--image");
+        brand.appendChild(el("img", {
+            class: "brand__img",
+            src: brandImage,
+            alt: SITE.brand || "Home",
+        }));
+    } else {
+        brand.textContent = SITE.brand;
+    }
 
     const firstId = navItems()[0] && navItems()[0].id;
     if (firstId) {
