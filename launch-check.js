@@ -1624,6 +1624,74 @@ function checkContentQuality(spec) {
     }
 }
 
+/* ---- Block-type registry consistency ------------------------------------ */
+
+/* Drift guard. The set of supported block types is stated in three independent
+   places that must agree, or sites break in confusing ways:
+     1. engine.js   BLOCK_RENDERERS         — what actually renders
+     2. launch-check.js KNOWN_BLOCK_TYPES   — what this validator accepts
+     3. site-spec.schema.json  block type enum — what the editor allows
+   When they disagree, a block can render but fail validation (or validate but
+   not render, or be flagged invalid in the IDE). This check parses the other
+   two sources and fails loudly on any mismatch, so adding a block type without
+   updating all three is caught here instead of in production.
+
+   It reads source text rather than importing: engine.js is an ES module (can't
+   be require()d here), and parsing the few lines we need is robust enough. */
+function checkBlockTypeRegistryConsistency() {
+    const known = new Set(KNOWN_BLOCK_TYPES);
+
+    // --- engine.js BLOCK_RENDERERS keys ---
+    const engineSrc = readText("engine.js");
+    if (engineSrc) {
+        const m = engineSrc.match(/const BLOCK_RENDERERS\s*=\s*\{([\s\S]*?)\};/);
+        if (!m) {
+            warn("spec", "ENGINE_RENDERERS_UNREADABLE",
+                "Could not locate BLOCK_RENDERERS in engine.js to cross-check block types");
+        } else {
+            const engineTypes = new Set(
+                [...m[1].matchAll(/^\s*([A-Za-z_]\w*)\s*:/gm)].map((x) => x[1])
+            );
+            diffBlockSets("engine.js BLOCK_RENDERERS", engineTypes, known);
+        }
+    }
+
+    // --- schema type enum ---
+    const schemaRes = readJson("site-spec.schema.json");
+    if (schemaRes.ok) {
+        const enumArr =
+            schemaRes.data &&
+            schemaRes.data.$defs &&
+            schemaRes.data.$defs.block &&
+            schemaRes.data.$defs.block.properties &&
+            schemaRes.data.$defs.block.properties.type &&
+            schemaRes.data.$defs.block.properties.type.enum;
+        if (!Array.isArray(enumArr)) {
+            warn("spec", "SCHEMA_BLOCK_ENUM_MISSING",
+                "Could not locate $defs.block.properties.type.enum in site-spec.schema.json");
+        } else {
+            diffBlockSets("site-spec.schema.json type enum", new Set(enumArr), known);
+        }
+    }
+}
+
+/* Report the two-way difference between a source's block-type set and the
+   validator's KNOWN_BLOCK_TYPES, as hard errors (this is exactly the drift the
+   check exists to stop). */
+function diffBlockSets(sourceLabel, sourceSet, known) {
+    const missingFromKnown = [...sourceSet].filter((t) => !known.has(t));
+    const missingFromSource = [...known].filter((t) => !sourceSet.has(t));
+
+    missingFromKnown.forEach((t) => {
+        fail("spec", "BLOCK_TYPE_DRIFT",
+            `Block type "${t}" is in ${sourceLabel} but not in launch-check.js KNOWN_BLOCK_TYPES — add it to BLOCK_RULES`);
+    });
+    missingFromSource.forEach((t) => {
+        fail("spec", "BLOCK_TYPE_DRIFT",
+            `Block type "${t}" is in launch-check.js but not in ${sourceLabel} — the three sources must agree`);
+    });
+}
+
 /* ---- Output -------------------------------------------------------------- */
 
 function truncate(s, n = 80) {
@@ -1731,6 +1799,7 @@ function main() {
     ].forEach((f) => referenced.add(f));
 
     checkSpecShape(spec);
+    checkBlockTypeRegistryConsistency();
     checkPlaceholders(spec);
     checkContactData(spec);
     checkSeo(html, spec);

@@ -68,12 +68,16 @@ function buildExample(block) {
     const wrapper = el("div", {class: "example-block"});
 
     // 3. Optional name + blurb — the standard pattern. `name` is an <h3> styled
-    //    like the other block headings; `blurb` is one .prose paragraph.
+    //    like every other block heading; `blurb` is one .prose paragraph. Use
+    //    the SHARED `block__name` / `block__blurb` classes so the common heading
+    //    styling is inherited for free (defined once in styles.css). Add your
+    //    type-specific class too (`example__name`) only if you need to override
+    //    something for this block; otherwise the shared class alone is enough.
     if (block.name) {
-        wrapper.appendChild(el("h3", {class: "example__name"}, block.name));
+        wrapper.appendChild(el("h3", {class: "block__name example__name"}, block.name));
     }
     if (block.blurb) {
-        wrapper.appendChild(el("div", {class: "prose example__blurb"}, `<p>${block.blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb example__blurb"}, `<p>${block.blurb}</p>`));
     }
 
     // 4. The actual content. Build it with el(); append to wrapper.
@@ -108,8 +112,11 @@ const BLOCK_RENDERERS = {
     map: buildMap,
     slideshow: buildCarousel,
     table: buildTable,
+    faq: buildFaq,
     gallery: buildGallery,
     photo: buildPhoto,
+    hours: buildHours,
+    review: buildReview,
     example: buildExample,   // <-- add
 };
 ```
@@ -132,18 +139,10 @@ spacing-between-blocks CSS — `.block + .block` handles vertical rhythm globall
 /* Rendered by buildExample() in engine.js from an `example` block. Uses the
    same tokens as cards/table so it matches and re-themes automatically. */
 
-/* Heading + blurb: match .table__name / .carousel__name exactly. */
-.example__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-.example__blurb {
-    margin: 0 0 0.75rem;
-}
+/* Heading + blurb need NO CSS here — the shared `.block__name` /
+   `.block__blurb` rules (defined once in the block-layout section of
+   styles.css) style them. The builder already emits those classes. Only add a
+   `.example__name { ... }` rule if THIS block needs to differ from the default. */
 
 .example__list {
     list-style: none;
@@ -231,9 +230,11 @@ Available helpers: `hasNonEmptyString(v)`, `plainTextLength(v)`,
 **4c.** Wire it into the `switch` in `checkBlockRequiredFields()`:
 
 ```js
-        case "example":
-            checkExampleBlock(block, where);
-            break;
+        case
+"example"
+:
+checkExampleBlock(block, where);
+break;
 ```
 
 ---
@@ -244,30 +245,31 @@ Three edits, mirroring an existing block subschema (copy `blockTable` or
 `blockFaq`).
 
 **5a.** Add a `blockExample` subschema in `$defs`. `additionalProperties: false`
+
 + `required` mirrors the validator's required fields, so the IDE flags typos and
   missing fields:
 
 ```json
 "blockExample": {
-  "type": "object",
-  "additionalProperties": false,
-  "description": "one-line description of what it renders",
-  "required": ["type", "items"],
-  "properties": {
-    "type": { "const": "example" },
-    "name": { "type": "string" },
-    "blurb": { "type": "string" },
-    "items": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["label"],
-        "properties": { "label": { "type": "string", "minLength": 1 } }
-      }
-    }
-  }
+"type": "object",
+"additionalProperties": false,
+"description": "one-line description of what it renders",
+"required": ["type", "items"],
+"properties": {
+"type": {"const": "example"},
+"name": {"type": "string"},
+"blurb": {"type": "string"},
+"items": {
+"type": "array",
+"minItems": 1,
+"items": {
+"type": "object",
+"additionalProperties": false,
+"required": ["label"],
+"properties": {"label": {"type": "string", "minLength": 1}}
+}
+}
+}
 }
 ```
 
@@ -301,8 +303,12 @@ their builders"):
   "name": "Example",
   "blurb": "Short intro line.",
   "items": [
-    { "label": "First" },
-    { "label": "Second" }
+    {
+      "label": "First"
+    },
+    {
+      "label": "Second"
+    }
   ]
 }
 ```

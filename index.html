@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sk">
+<html lang="sk" class="site-booting">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -31,6 +31,13 @@
     <link rel="stylesheet" href="styles.css"/>
     <link rel="stylesheet" href="animation/skull/skull.css"/>
 
+    <!-- Anti-flash safety net: html.site-booting hides the shell until the
+         engine swaps it to site-ready. If JS is off or fails to load, that
+         swap never happens — so force the page visible for no-JS users. -->
+    <noscript>
+        <style>html.site-booting body { opacity: 1 !important; }</style>
+    </noscript>
+
     <!-- GoatCounter analytics (privacy-friendly, no cookies). Loads async and
          independently of engine.js so tracking works even if the app fails.
          The visible visitor count in the footer is rendered separately by the
@@ -39,6 +46,10 @@
             async src="//gc.zgo.at/count.js"></script>
 </head>
 <body data-theme="dark">
+<!-- Keyboard/screen-reader skip link: jumps past the header to the main
+     content. Visually hidden until focused (see .skip-link in styles.css);
+     targets #main, which is tabindex="-1" so it can receive focus. -->
+<a class="skip-link" href="#main">Preskočiť na obsah</a>
 <!-- Background layer (image + overlay), painted by JS -->
 <div class="bg" id="bg" aria-hidden="true"></div>
 <div class="bg" id="bg2" aria-hidden="true"></div>

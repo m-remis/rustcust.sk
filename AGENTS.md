@@ -488,7 +488,13 @@ colors live as standalone rules, identical in light and dark mode:
   `renderNav()`, `renderContent()`, `renderFooter()`, `initInputMode()`,
   `initTheme()`, `initMobileMenu()`, `initHeaderFit()`, `initTabs()`,
   `initBackground()`, and finally `initSkull()` (wrapped in try/catch so a
-  mascot failure can't break the page).
+  mascot failure can't break the page). The whole body runs inside a
+  `try { … } finally { reveal() }`: the shell starts hidden via
+  `html.site-booting` (set inline in `index.html` to avoid a flash of the empty
+  layout), and `reveal()` swaps it to `site-ready` on **every** exit path
+  (normal render and the error-screen return). A `<noscript>` block in
+  `index.html` force-shows the page if JS never runs, so the booting class can
+  never permanently hide it.
 - `loadContent()` — fetch + parse `site-spec.json`; returns `{data, error}`
   with `error.kind` of `fetch` / `parse`; never throws.
 - `getSections()` — the normalized, guarded ordered section list. Drops entries

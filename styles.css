@@ -198,6 +198,7 @@ html.site-booting body {
 
 html.site-ready body {
     opacity: 1;
+    transition: opacity 100ms ease;
 }
 
 /* Fallback for older browsers that do not support scrollbar-gutter.
@@ -783,6 +784,24 @@ a, button, [role="tab"], .menu-toggle, .theme-toggle {
     margin-top: 0;
 }
 
+/* Shared block heading + intro line. Six block types (table, faq, slideshow,
+   gallery, hours, review) open with an optional serif name and a prose blurb;
+   these were six identical rule pairs. Builders now emit `block__name` /
+   `block__blurb` alongside the type-specific class (e.g. "block__name
+   table__name"), so the common look lives here once and a new block's heading
+   is styled for free. Override per type by adding rules to the specific class. */
+.block__name {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
+
+.block__blurb {
+    margin: 0 0 0.75rem;
+}
+
 /* Intro / hero */
 .intro__eyebrow {
     font-size: 0.85rem;
@@ -930,7 +949,7 @@ a.card__link {
    (no hover on mobile) — not just on desktop hover. The arrow rides on the
    accent meta line and nudges right on hover. */
 a.card__link .card__meta::after {
-    /* content: var(--unicode-arrow); /* Link list (where to find me / contact) */
+    /* content: var(--unicode-arrow); */ /* arrow cue intentionally disabled */
     margin-left: 0.4rem;
     display: inline-block;
     font-size: 2.5em;
@@ -998,12 +1017,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
     transform: translateX(3px);
 }
 
-/* Icon sits first, never shrinks */
-.link-list .link-icon {
-    flex: none;
-    display: inline-flex;
-}
-
 /* Kind + value stack in a column next to the icon */
 .link-list__text {
     display: flex;
@@ -1060,7 +1073,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
 .link-list--grid a:hover {
     transform: translateY(-2px);
 }
-
 
 /* Handle pushed to the right end. margin-left:auto does the "space-between"
    job without forcing a wrap. */
@@ -1128,20 +1140,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
    rules here are the DESKTOP table; do not put display:block / card styling
    here or it leaks onto desktop. */
 
-/* Optional table name (a `table` block's `name`). Matches .carousel__name. */
-.table__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-/* Optional blurb under a table name (a `table` block's `blurb`). */
-.table__blurb {
-    margin: 0 0 0.75rem;
-}
-
 /* Scroll container: holds the panel frame and clips the corners. On desktop a
    very wide table can scroll sideways here; on mobile this is neutralized and
    the rows stack instead (see responsive section). */
@@ -1207,19 +1205,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
    question) toggling a `.faq__a` panel (the answer). Uses the same panel
    tokens as cards/links/table so it re-themes in light/dark for free. The
    +/- icon is drawn with pseudo-elements (no icon font / SVG asset). */
-
-/* Heading + blurb: identical to .table__name / .table__blurb. */
-.faq__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-.faq__blurb {
-    margin: 0 0 0.75rem;
-}
 
 .faq__list {
     display: grid;
@@ -1403,20 +1388,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
    controls); two or more = manual carousel with prev/next buttons, dots, and an
    "n / total" chip. Colors come from the theme tokens above so it re-themes and
    matches cards/map automatically. */
-
-/* Optional slideshow name (a `slideshow` block's `name`). */
-.carousel__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-/* Optional blurb under a slideshow name (a `slideshow` block's `blurb`). */
-.carousel__blurb {
-    margin: 0 0 0.75rem;
-}
 
 .carousel {
     position: relative;
@@ -1687,19 +1658,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
    clicking any tile opens the lightbox at that image. A `photo` block is a
    one-image gallery. */
 
-/* Optional name/blurb above the grid — mirrors the carousel's. */
-.gallery__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-.gallery__blurb {
-    margin: 0 0 0.75rem;
-}
-
 .gallery__grid {
     display: grid;
     /* Auto-fit tiles; min tile ~13rem, never overflowing a narrow screen. */
@@ -1833,17 +1791,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
    today's row is highlighted. Mirrors the panel/border token language used
    by the table and gallery blocks.
 ---------------------------------------------------------------------- */
-.hours__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-.hours__blurb {
-    margin: 0 0 0.75rem;
-}
 
 .hours__list {
     margin: 0;
@@ -1892,24 +1839,11 @@ a.card__link:not(:has(.card__meta)):hover::after {
     font-weight: 600;
 }
 
-
 /* ---- Review block ----------------------------------------------------- */
 /* Rendered by buildReview() in engine.js from a `review` block. Outbound
    "leave a review" CTAs (Google, Facebook, …). No backend — each is a link to
    the platform's own review page. Surfaces match cards/links so it re-themes
    for free in light/dark and on the 404 page. */
-
-.review__name {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 1.25rem;
-    margin: 0 0 0.6rem;
-    color: var(--text);
-}
-
-.review__blurb {
-    margin: 0 0 0.75rem;
-}
 
 .review__list {
     display: grid;
@@ -1970,7 +1904,6 @@ a.card__link:not(:has(.card__meta)):hover::after {
     opacity: 1;
     transform: translateX(2px);
 }
-
 
 /* That prevents Firefox/Android from hijacking random taps and opening Maps.
 Users can intentionally open it via the explicit "Open in Maps" link. */

@@ -120,8 +120,23 @@ const el = (tag, attrs = {}, html = "") => {
 
 const isExternalUrl = (url = "") => /^https?:\/\//i.test(url);
 
+// Build an anchor's attrs with the standard external-link decoration applied:
+// external (http/https) targets open in a new tab with rel="noopener
+// noreferrer"; internal/relative ones are left untouched. `base` carries any
+// other attrs (class, aria-label, …). One place owns this so every outbound
+// link is decorated identically — see also the sanitizer, which applies the
+// same rel to authored <a> tags in rich text.
+const linkAttrs = (url, base = {}) => {
+    const attrs = {...base, href: url};
+    if (isExternalUrl(url)) {
+        attrs.target = "_blank";
+        attrs.rel = "noopener noreferrer";
+    }
+    return attrs;
+};
+
 /* ----------------------------------------------------------------------
-   1B. SINGLE SOURCE OF TRUTH — business resolution
+   3. SINGLE SOURCE OF TRUTH — business resolution
 
    Contact + legal data lives in exactly one place: SITE.business. Blocks that
    need a phone/email/social reference it by KEY instead of restating the
@@ -168,7 +183,7 @@ function resolveRef(key) {
 }
 
 /* ----------------------------------------------------------------------
-   1C. SAFE INLINE HTML
+   4. SAFE INLINE HTML
 
    Several blocks accept small inline HTML authored in the spec. As soon as
    that text can come from an LLM or a client intake form, raw innerHTML is a
@@ -286,7 +301,7 @@ const SOCIAL_ICONS = {
 };
 
 /* Build the row of social links shown next to the brand: a colored icon plus
-   its visible label. Routes through el() and isExternalUrl() so external links
+   its visible label. Routes through el() and linkAttrs() so external links
    get target=_blank + rel=noopener for free, same as every other link. */
 function buildSocials(items) {
     const wrap = el("div", {class: "socials"});
@@ -294,16 +309,10 @@ function buildSocials(items) {
     items.forEach((it) => {
         const icon = SOCIAL_ICONS[it.icon] || "";
 
-        const attrs = {
+        const attrs = linkAttrs(it.url, {
             class: `socials__link socials__link--${it.icon}`,
-            href: it.url,
             "aria-label": it.label,
-        };
-
-        if (isExternalUrl(it.url)) {
-            attrs.target = "_blank";
-            attrs.rel = "noopener noreferrer";
-        }
+        });
 
         wrap.appendChild(
             el("a", attrs, `${icon}<span class="socials__label">${it.label}</span>`)
@@ -314,7 +323,7 @@ function buildSocials(items) {
 }
 
 /* ----------------------------------------------------------------------
-   2B. BLOCK BUILDERS
+   5. BLOCK BUILDERS
 
    Small functions that each turn one block's data into a DOM node. They're
    pure builders (no SITE access), so they can be reused and tested. The
@@ -374,11 +383,7 @@ function buildCards(block) {
         const cardClass = icon ? "card card--icon" : "card";
 
         if (linked && it.url) {
-            const attrs = {class: `${cardClass} card__link`, href: it.url};
-            if (isExternalUrl(it.url)) {
-                attrs.target = "_blank";
-                attrs.rel = "noopener noreferrer";
-            }
+            const attrs = linkAttrs(it.url, {class: `${cardClass} card__link`});
             grid.appendChild(el("a", attrs, inner));
         } else {
             grid.appendChild(el("article", {class: cardClass}, inner));
@@ -408,14 +413,9 @@ function buildLinks(block) {
     items.forEach((it) => {
         if (!it || !it.url) return;
 
-        const attrs = {
-            href: it.url,
+        const attrs = linkAttrs(it.url, {
             class: it.icon ? `link-list--${it.icon}` : null,
-        };
-        if (isExternalUrl(it.url)) {
-            attrs.target = "_blank";
-            attrs.rel = "noopener noreferrer";
-        }
+        });
 
         // Optional leading icon — `icon` must match a key in SOCIAL_ICONS.
         const icon = it.icon && SOCIAL_ICONS[it.icon]
@@ -520,10 +520,10 @@ function buildTable(block) {
     const wrapper = el("div", {class: "table-block"});
 
     if (name) {
-        wrapper.appendChild(el("h3", {class: "table__name"}, name));
+        wrapper.appendChild(el("h3", {class: "block__name table__name"}, name));
     }
     if (blurb) {
-        wrapper.appendChild(el("div", {class: "prose table__blurb"}, `<p>${blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb table__blurb"}, `<p>${blurb}</p>`));
     }
 
     // Scroll wrapper: on a narrow screen the table scrolls sideways instead of
@@ -563,7 +563,7 @@ function buildTable(block) {
 }
 
 /* ----------------------------------------------------------------------
-   2B-bis. FAQ / ACCORDION
+   5B. FAQ / ACCORDION
 
    buildFaq(block) returns a list of expand/collapse question rows.
    Shape: { name?, blurb?, items: [ { q, a }, ... ] }  (q + a required per item)
@@ -587,10 +587,10 @@ function buildFaq(block) {
     const wrapper = el("div", {class: "faq-block"});
 
     if (block.name) {
-        wrapper.appendChild(el("h3", {class: "faq__name"}, block.name));
+        wrapper.appendChild(el("h3", {class: "block__name faq__name"}, block.name));
     }
     if (block.blurb) {
-        wrapper.appendChild(el("div", {class: "prose faq__blurb"}, `<p>${block.blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb faq__blurb"}, `<p>${block.blurb}</p>`));
     }
 
     const list = el("div", {class: "faq__list"});
@@ -639,7 +639,7 @@ function buildFaq(block) {
 }
 
 /* ----------------------------------------------------------------------
-   2C. SLIDESHOW / CAROUSEL (reusable)
+   6. SLIDESHOW / CAROUSEL (reusable)
 
    buildCarousel(block) returns a self-contained carousel node for a slideshow
    block: { name?, blurb?, slides: [ {src, title, caption, text}, ... ] }
@@ -802,10 +802,10 @@ function buildCarousel(block) {
     const wrapper = el("div", {class: "carousel-block"});
 
     if (name) {
-        wrapper.appendChild(el("h3", {class: "carousel__name", id: `${uid}-name`}, name));
+        wrapper.appendChild(el("h3", {class: "block__name carousel__name", id: `${uid}-name`}, name));
     }
     if (blurb) {
-        wrapper.appendChild(el("div", {class: "prose carousel__blurb"}, `<p>${blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb carousel__blurb"}, `<p>${blurb}</p>`));
     }
 
     const root = el("div", {
@@ -994,7 +994,7 @@ function buildCarousel(block) {
 }
 
 /* ----------------------------------------------------------------------
-   2C-bis. GALLERY / PHOTO (image grid, shares the carousel's lightbox)
+   6B. GALLERY / PHOTO (image grid, shares the carousel's lightbox)
 
    buildGallery(block) renders a responsive grid of image tiles. Same theme
    tokens and the SAME shared lightbox as the carousel (getLightbox), but every
@@ -1043,10 +1043,10 @@ function buildGallery(block) {
     const wrapper = el("div", {class: "gallery-block"});
 
     if (name) {
-        wrapper.appendChild(el("h3", {class: "gallery__name", id: `${uid}-name`}, name));
+        wrapper.appendChild(el("h3", {class: "block__name gallery__name", id: `${uid}-name`}, name));
     }
     if (blurb) {
-        wrapper.appendChild(el("div", {class: "prose gallery__blurb"}, `<p>${blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb gallery__blurb"}, `<p>${blurb}</p>`));
     }
 
     const gridAttrs = {
@@ -1172,7 +1172,7 @@ function buildPhoto(block) {
 }
 
 /* ----------------------------------------------------------------------
-   2C-bis. OPENING HOURS
+   6C. OPENING HOURS
 
    Renders SITE.business.hours as a seven-row week (Pondelok…Nedeľa). Hours
    are single-source-of-truth: the block carries no hours data, only an
@@ -1215,10 +1215,10 @@ function buildHours(block) {
     const wrapper = el("div", {class: "hours-block"});
 
     if (name) {
-        wrapper.appendChild(el("h3", {class: "hours__name"}, name));
+        wrapper.appendChild(el("h3", {class: "block__name hours__name"}, name));
     }
     if (blurb) {
-        wrapper.appendChild(el("div", {class: "prose hours__blurb"}, `<p>${blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb hours__blurb"}, `<p>${blurb}</p>`));
     }
 
     const dl = el("dl", {class: "hours__list"});
@@ -1282,10 +1282,10 @@ function buildReview(block) {
     const wrapper = el("div", {class: "review-block"});
 
     if (block.name) {
-        wrapper.appendChild(el("h3", {class: "review__name"}, block.name));
+        wrapper.appendChild(el("h3", {class: "block__name review__name"}, block.name));
     }
     if (block.blurb) {
-        wrapper.appendChild(el("div", {class: "prose review__blurb"}, `<p>${block.blurb}</p>`));
+        wrapper.appendChild(el("div", {class: "prose block__blurb review__blurb"}, `<p>${block.blurb}</p>`));
     }
 
     const list = el("div", {class: "review__list"});
@@ -1294,14 +1294,9 @@ function buildReview(block) {
         const platform = typeof it.platform === "string" ? it.platform : "";
         const icon = REVIEW_ICONS[platform] || REVIEW_ICONS.generic;
 
-        const attrs = {
-            href: it.url,
+        const attrs = linkAttrs(it.url, {
             class: platform ? `review__cta review__cta--${platform}` : "review__cta",
-        };
-        if (isExternalUrl(it.url)) {
-            attrs.target = "_blank";
-            attrs.rel = "noopener noreferrer";
-        }
+        });
 
         // label is plain text → sanitizeInline escapes it. icon is authored SVG.
         const a = el(
@@ -1320,7 +1315,7 @@ function buildReview(block) {
 }
 
 /* ----------------------------------------------------------------------
-   2D. BLOCK DISPATCH
+   7. BLOCK DISPATCH
 ---------------------------------------------------------------------- */
 
 const BLOCK_RENDERERS = {
@@ -1351,7 +1346,7 @@ function renderBlock(block) {
 }
 
 /* ----------------------------------------------------------------------
-   3. RENDER NAVIGATION
+   8. RENDER NAVIGATION
 
    Tabs are derived from the sections array (navItems()), so there is no
    separate nav list to keep in sync.
@@ -1445,7 +1440,7 @@ function renderNav() {
 }
 
 /* ----------------------------------------------------------------------
-   4. RENDER CONTENT SECTIONS
+   9. RENDER CONTENT SECTIONS
 
    Each section in the array is rendered as its optional title followed by its
    blocks, in order. Reorder a section by reordering its `blocks`; reorder the
@@ -1513,13 +1508,10 @@ function renderFooter() {
     if (analytics && analytics.countUrl) {
         // Link to the public dashboard if one is configured, else a plain span.
         const countEl = analytics.dashboardUrl
-            ? el("a", {
+            ? el("a", linkAttrs(analytics.dashboardUrl, {
                 class: "footer__count",
-                href: analytics.dashboardUrl,
-                target: "_blank",
-                rel: "noopener noreferrer",
                 "aria-label": "Štatistiky návštevnosti",
-            })
+            }))
             : el("span", {class: "footer__count"});
         f.append(countEl);
         renderVisitorCount(countEl, analytics.countUrl, analytics.countLabel);
@@ -1550,7 +1542,7 @@ async function renderVisitorCount(target, url, label) {
 }
 
 /* ----------------------------------------------------------------------
-   4A. RENDER THEME
+   10. RENDER THEME
 
    Brand-defining design tokens live in SITE.theme so one engine can produce
    differently-branded sites from config alone. This writes them as :root
@@ -1586,7 +1578,7 @@ function renderTheme() {
 }
 
 /* ----------------------------------------------------------------------
-   4B. RENDER DOCUMENT HEAD
+   11. RENDER DOCUMENT HEAD
 
    Single source of truth for the page's metadata: everything here is driven
    by SITE.meta. The tags also exist statically in index.html so crawlers and
@@ -1654,7 +1646,7 @@ function renderHead() {
 }
 
 /* ----------------------------------------------------------------------
-   5A. INPUT MODE
+   12. INPUT MODE
 ---------------------------------------------------------------------- */
 
 function initInputMode() {
@@ -1687,7 +1679,7 @@ function initInputMode() {
 }
 
 /* ----------------------------------------------------------------------
-   5. THEME (light / dark + localStorage)
+   13. THEME (light / dark + localStorage)
 ---------------------------------------------------------------------- */
 
 const THEME_KEY = "theme-preference";
@@ -1735,7 +1727,7 @@ function initTheme() {
 }
 
 /* ----------------------------------------------------------------------
-   6. MOBILE MENU
+   14. MOBILE MENU
 ---------------------------------------------------------------------- */
 
 function initMobileMenu() {
@@ -1811,7 +1803,7 @@ function initMobileMenu() {
 }
 
 /* ----------------------------------------------------------------------
-   7. TABS
+   15. TABS
 
    Each section is a tab panel; only one is shown at a time. The URL hash
    drives the active tab, so direct links and browser navigation work. The
@@ -1935,7 +1927,7 @@ function initTabs() {
 }
 
 /* ----------------------------------------------------------------------
-   8B. HEADER FIT
+   16. HEADER FIT
 ---------------------------------------------------------------------- */
 
 function initHeaderFit() {
@@ -1997,7 +1989,7 @@ function initHeaderFit() {
 }
 
 /* ----------------------------------------------------------------------
-   8. BACKGROUND
+   17. BACKGROUND
 ---------------------------------------------------------------------- */
 
 function initBackground() {
@@ -2056,7 +2048,7 @@ function initBackground() {
 }
 
 /* ----------------------------------------------------------------------
-   9. BOOT
+   18. BOOT
 ---------------------------------------------------------------------- */
 
 /* Fetch the content JSON. JSON is the single source of truth — there is no
@@ -2151,52 +2143,67 @@ function renderErrorState(reason) {
  */
 
 async function init() {
-    const {data, error} = await loadContent();
-    SITE = data || {};
-
-    // Drive the document head (title, meta, OG, canonical) from SITE.meta.
-    // Done first so the metadata is correct even if we fall through to the
-    // error screen below.
-    renderHead();
-
-    // Apply brand design tokens from SITE.theme (before content paints, and
-    // before the error screen, so both are correctly branded).
-    renderTheme();
-
-    // JSON is the single source of truth: render it, or show the error screen.
-    // Three ways we end up with nothing to render:
-    //   - "fetch": couldn't load the file (404 / network / file:// CORS),
-    //   - "parse": loaded but wasn't valid JSON,
-    //   - "empty": loaded + parsed fine, but had no usable `sections`.
-    const hasContent = getSections().length > 0;
-
-    if (!hasContent) {
-        const reason = error || {
-            kind: "empty",
-            detail: `${DATA_URL} loaded but contained no usable "sections".`,
-        };
-        console.error("No renderable content — showing error screen:", reason.detail);
-
-        renderErrorState(reason);
-        initInputMode();
-        initTheme();
-        return;
-    }
-
-    renderNav();
-    renderContent();
-    renderFooter();
-    initInputMode();
-    initTheme();
-    initMobileMenu();
-    initHeaderFit();
-    initTabs();
-    initBackground();
+    // Reveal the page exactly once, no matter which path init() takes (normal
+    // render OR the error screen). The shell starts hidden via html.site-booting
+    // (set inline in index.html before first paint) to avoid a flash of the
+    // empty layout; we swap to site-ready here so the finished page fades in.
+    // Must run on every exit, or the page would stay invisible — hence finally.
+    const reveal = () => {
+        const html = document.documentElement;
+        html.classList.remove("site-booting");
+        html.classList.add("site-ready");
+    };
 
     try {
-        initSkull();
-    } catch (err) {
-        console.warn("Skull init failed:", err);
+        const {data, error} = await loadContent();
+        SITE = data || {};
+
+        // Drive the document head (title, meta, OG, canonical) from SITE.meta.
+        // Done first so the metadata is correct even if we fall through to the
+        // error screen below.
+        renderHead();
+
+        // Apply brand design tokens from SITE.theme (before content paints, and
+        // before the error screen, so both are correctly branded).
+        renderTheme();
+
+        // JSON is the single source of truth: render it, or show the error
+        // screen. Three ways we end up with nothing to render:
+        //   - "fetch": couldn't load the file (404 / network / file:// CORS),
+        //   - "parse": loaded but wasn't valid JSON,
+        //   - "empty": loaded + parsed fine, but had no usable `sections`.
+        const hasContent = getSections().length > 0;
+
+        if (!hasContent) {
+            const reason = error || {
+                kind: "empty",
+                detail: `${DATA_URL} loaded but contained no usable "sections".`,
+            };
+            console.error("No renderable content — showing error screen:", reason.detail);
+
+            renderErrorState(reason);
+            initInputMode();
+            initTheme();
+            return;
+        }
+
+        renderNav();
+        renderContent();
+        renderFooter();
+        initInputMode();
+        initTheme();
+        initMobileMenu();
+        initHeaderFit();
+        initTabs();
+        initBackground();
+
+        try {
+            initSkull();
+        } catch (err) {
+            console.warn("Skull init failed:", err);
+        }
+    } finally {
+        reveal();
     }
 }
 
