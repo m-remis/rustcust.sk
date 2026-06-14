@@ -82,7 +82,10 @@ name. Do not treat it as forgotten boilerplate. It is source attribution and a
 searchable marker for sites built from this template. Keep it in source
 comments or documentation; it does not need to be visible in the UI unless a
 visible credit was explicitly requested. It currently lives in `index.html`,
-`404.html`, `engine.js`, `styles.css`, `README.md`, `AGENTS.md`, and this file.
+`engine.js`, `styles.css`, `launch-check.js`, `README.md`, `AGENTS.md`,
+`LAUNCH-CHECK.md`, `_block-template.md`, and this file. (`404.html` does **not**
+carry it directly.) The grep below is the source of truth — run it rather than
+trusting this list.
 
 Before deploy, verify it still exists somewhere intentional:
 
@@ -120,9 +123,9 @@ node -e "JSON.parse(require('fs').readFileSync('site-spec.json','utf8'))"
   `label`** (it doubles as the `aria-label`). `icon` must match a key in the
   `SOCIAL_ICONS` map in `engine.js` (currently `instagram`, `youtube`, `email`,
   `phone`). Remove platforms the client doesn't have.
-    - [ ] **New platform?** Add an inline SVG to `SOCIAL_ICONS` in `engine.js`
-      **and** a `.socials__link--<icon> svg { color: … }` brand-tint rule in
-      `styles.css`, then reference the key here. (See `AGENTS.md` → "Socials".)
+  - [ ] **New platform?** Add an inline SVG to `SOCIAL_ICONS` in `engine.js`
+    **and** a `.socials__link--<icon> svg { color: … }` brand-tint rule in
+    `styles.css`, then reference the key here. (See `AGENTS.md` → "Socials".)
 - [ ] **`backgrounds[]`** — paths under `assets/background/`, cycled with a
   crossfade. Each path must match a file you actually drop in (§4). A missing
   file fails silently to a plain background — it won't crash, but you get no
@@ -157,9 +160,10 @@ matching tags in `index.html` are only a crawler fallback (§3).
   request. Note the actual *tracking* script is a separate `<script>` in
   `index.html` (§3) — this object only controls the displayed number.
 
-### 1c. Sections + blocks (`meta.sections[]`)
+### 1c. Sections + blocks (`sections[]`)
 
-`sections` is an **ordered array** — the order IS the nav order and the page
+`sections` is a **top-level** key (a sibling of `brand`, `meta`, `footer`), not
+nested under `meta`. It is an **ordered array** — the order IS the nav order and the page
 order. Each entry is `{ id, label, title?, blocks: [...] }`:
 
 - [ ] **`id`** — unique, URL-hash-friendly (letters/numbers/`-`/`_`). Used as
@@ -170,8 +174,8 @@ order. Each entry is `{ id, label, title?, blocks: [...] }`:
   leads with a `hero` block usually omits it.
 - [ ] **`blocks[]`** — ordered content blocks, each `{ "type": …, … }`.
   Reorder a section by reordering its blocks. Supported types: `hero`, `text`,
-  `cards`, `links`, `map`, `slideshow`, `table`, `faq`, `gallery`, `photo` —
-  shapes in `AGENTS.md` and the `engine.js` header comment.
+  `cards`, `links`, `map`, `slideshow`, `table`, `faq`, `gallery`, `photo`,
+  `hours`, `review` — shapes in `AGENTS.md` and the `engine.js` header comment.
 
 Per-block placeholders to hunt down for a new client:
 
@@ -216,6 +220,17 @@ Per-block placeholders to hunt down for a new client:
   `columns` (1–6). Grid of tiles sharing the slideshow's lightbox. Give images
   a `title`/`caption` — a gallery image with no text is flagged for missing alt.
 - [ ] **`photo`** — single-image sugar: `{ src, title?, caption?, text? }`.
+- [ ] **`hours`** — opening-hours table. Carries **no** data of its own; it reads
+  `business.hours` (the single source of truth) and highlights the current day.
+  Optional `name`/`blurb` heading. Make sure `business.hours` is filled in (§1a /
+  the `business` block) — an empty `hours` object renders nothing.
+- [ ] **`review`** — "leave a review" call-to-action. `items[]` of
+  `{ label, url, platform? }`. Each item is an **outbound link** to where reviews
+  actually live (Google, Facebook, …) — it does **not** collect or store reviews
+  (there's no backend). `platform` (`google` / `facebook`) adds a brand icon;
+  any other value renders a generic star. Replace any template URL with the
+  client's real review page (for Google, the direct
+  `https://search.google.com/local/writereview?placeid=…` deep link is best).
 
 ---
 

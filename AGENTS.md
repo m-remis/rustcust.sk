@@ -236,10 +236,12 @@ credit was explicitly requested):
 - CSS / JS: `/* Built from m-remis/static-web-template */`
 - Markdown: `<!-- Built from m-remis/static-web-template -->`
 
-These strings currently live in `index.html`, `404.html` (via shared assets),
-`engine.js`, `styles.css`, `README.md`, `CLIENT-CHECKLIST.md`, and this file.
-Preserve them when rewriting any of those, and add an equivalent comment to any
-new major source/doc file. Do not add them to the placeholder audit grep.
+These strings currently live in `index.html`, `engine.js`, `styles.css`,
+`launch-check.js`, `README.md`, `CLIENT-CHECKLIST.md`, `LAUNCH-CHECK.md`,
+`_block-template.md`, and this file. (`404.html` does not carry it directly — it
+shares `styles.css`, which does.) Preserve them when rewriting any of those, and
+add an equivalent comment to any new major source/doc file. Do not add them to
+the placeholder audit grep.
 
 ## The golden rule
 

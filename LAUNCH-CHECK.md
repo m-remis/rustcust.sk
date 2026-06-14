@@ -143,15 +143,16 @@ Fails if any are missing: `index.html`, `styles.css`, `site-spec.json`,
   no duplicate ids; `label` present (warning if not). Note `type` lives on
   **blocks**, not sections.
 - **Block types** — each block's `type` must be one the engine knows
-  (`hero, text, cards, links, map, slideshow, table, gallery, photo`). An
-  unknown type is flagged because the engine silently skips it. The known list
-  is `BLOCK_RULES` near the top of `launch-check.js` — keep it in sync with
-  `BLOCK_RENDERERS` in `engine.js` when you add a block type.
+  (`hero, text, cards, links, map, slideshow, table, faq, gallery, photo, hours,
+  review`). An unknown type is flagged because the engine silently skips it. The
+  known list is `BLOCK_RULES` near the top of `launch-check.js` — keep it in sync
+  with `BLOCK_RENDERERS` in `engine.js` when you add a block type.
 - **Block required fields** — `table` needs `headings` + `rows`; `cards` and
   `links` need `items`; `slideshow` needs `slides`; `gallery` needs `images`
   (and `columns`, if set, must be 1–6); `photo` needs `src`; `map` needs `url`
-  or `embed`; etc. (a builder returns nothing on bad input, so these would
-  vanish).
+  or `embed`; `faq` needs `items` (each with `q` + `a`); `review` needs `items`
+  (each with `label` + `url`); `hours` reads `business.hours` rather than its own
+  fields; etc. (a builder returns nothing on bad input, so these would vanish).
 - **Placeholder text** — scans every string for filler markers (`lorem`,
   `bla bla`, `nejaky`, `tbd`, `placeholder`, …) and reports the JSON path.
 - **Contact data** — emails (fake/invalid patterns like `r@r.sk`), phones (too

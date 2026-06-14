@@ -2082,14 +2082,14 @@ Users can intentionally open it via the explicit "Open in Maps" link. */
     width: 100%;
     max-width: none;
     flex-shrink: 0;
-    padding: 1rem clamp(1.5rem, 5vw, 4rem) 1rem;
+    padding: 0.75rem clamp(1.5rem, 5vw, 4rem);
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1rem;
+    gap: 0.4rem 1rem;
     justify-content: space-between;
     align-items: center;
-    color: var(--text-faint);
-    font-size: 0.85rem;
+    color: var(--text-soft);
+    font-size: 0.78rem;
     border-top: 1px solid var(--border);
 }
 
@@ -2108,13 +2108,14 @@ Users can intentionally open it via the explicit "Open in Maps" link. */
    shared `.site-footer a` style — same as the credit link — so both match.
    The faint color applies only to the non-link span variant. */
 span.footer__count {
-    color: var(--text-faint);
+    color: var(--text-soft);
 }
 
 .footer__count:not(:empty)::before {
     content: "·";
     margin: 0 0.5rem 0 0;
-    color: var(--text-faint);
+    color: var(--text-soft);
+    opacity: 0.6;
 }
 
 /* ---- Responsive ------------------------------------------------------- */
