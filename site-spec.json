@@ -114,6 +114,18 @@
               "caption": "Retro bicykle, prestavby a detaily na mieru."
             }
           ]
+        },
+        {
+          "type": "review",
+          "name": "Bol si spokojný ?",
+          "blurb": "Budem rád za tvoju recenziu.",
+          "items": [
+            {
+              "label": "Ohodnoť RustCust na Google",
+              "url": "https://search.google.com/local/writereview?placeid=ChIJWWf1JFX1FEcR92oFE99mwc4",
+              "platform": "google"
+            }
+          ]
         }
       ]
     },
@@ -544,6 +556,18 @@
             "phone",
             "email",
             "instagram"
+          ]
+        },
+        {
+          "type": "review",
+          "name": "Bol si spokojný ?",
+          "blurb": "Budem rád za tvoju recenziu.",
+          "items": [
+            {
+              "label": "Ohodnoť RustCust na Google",
+              "url": "https://search.google.com/local/writereview?placeid=ChIJWWf1JFX1FEcR92oFE99mwc4",
+              "platform": "google"
+            }
           ]
         },
         {

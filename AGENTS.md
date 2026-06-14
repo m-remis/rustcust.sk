@@ -408,6 +408,7 @@ Current types:
 | `gallery`    | `buildGallery`   | paged responsive image grid (opt. `columns` 1–6, `perPage` default 12); image-only tiles; shares the slideshow lightbox across pages|
 | `photo`      | `buildPhoto`     | single-image sugar; normalizes to a one-image `gallery`                  |
 | `hours`      | `buildHours`     | opening hours; reads `business.hours` (SSOT), highlights the current day |
+| `review`     | `buildReview`    | leave-a-review CTAs to external platforms (`items` of `{ label, url, platform? }`); outbound links only, no backend |
 
 The exact block shapes are documented in the long comment at the top of
 `engine.js` (the `BLOCK TYPES` section). Keep that comment in sync if you change

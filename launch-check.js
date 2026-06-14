@@ -137,6 +137,9 @@ const BLOCK_RULES = Object.freeze({
     hours: {
         description: "opening hours block (reads business.hours)",
     },
+    review: {
+        description: "leave-a-review CTA block (outbound links, no backend)",
+    },
 });
 
 const KNOWN_BLOCK_TYPES = Object.keys(BLOCK_RULES);
@@ -560,6 +563,9 @@ function checkBlockRequiredFields(block, where, section, sectionIds) {
         case "hours":
             checkHoursBlock(block, where);
             break;
+        case "review":
+            checkReviewBlock(block, where);
+            break;
         default:
             // Unknown types are handled before dispatch.
             break;
@@ -749,6 +755,41 @@ function checkFaqBlock(block, where) {
         }
         if (it && it.q) {
             checkDuplicateValue(seenQ, it.q, "content", "DUPLICATE_FAQ_QUESTION", `${iw} duplicates another question in the same block`);
+        }
+    });
+}
+
+/* Platforms with a dedicated brand icon in engine.js REVIEW_ICONS. Others
+   render with the generic star glyph — not an error, just a soft note. */
+const REVIEW_PLATFORMS = ["google", "facebook"];
+
+function checkReviewBlock(block, where) {
+    if (!Array.isArray(block.items) || block.items.length === 0) {
+        fail("spec", "REVIEW_EMPTY", `${where} (review) has no "items"`);
+        return;
+    }
+
+    const seenUrl = new Set();
+    block.items.forEach((it, i) => {
+        const iw = `${where}.items[${i}]`;
+
+        if (!hasNonEmptyString(it && it.label)) {
+            fail("spec", "REVIEW_ITEM_NO_LABEL", `${iw} (review) has no "label"`);
+        }
+
+        if (!hasNonEmptyString(it && it.url)) {
+            fail("spec", "REVIEW_ITEM_NO_URL", `${iw} (review) has no "url" — the CTA wouldn't render`);
+        } else {
+            // Review CTAs point at an external platform; a local/relative URL is
+            // almost certainly a mistake here.
+            if (!isExternalUrl(it.url)) {
+                warn("links", "REVIEW_URL_NOT_EXTERNAL", `${iw} (review) "url" isn't an http(s) link`);
+            }
+            checkDuplicateValue(seenUrl, it.url, "links", "DUPLICATE_REVIEW_URL", `${iw} duplicates another review URL in the same block`);
+        }
+
+        if (hasNonEmptyString(it && it.platform) && !REVIEW_PLATFORMS.includes(it.platform)) {
+            warn("content", "REVIEW_UNKNOWN_PLATFORM", `${iw} (review) "platform" "${it.platform}" has no brand icon — renders a generic star`);
         }
     });
 }

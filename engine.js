@@ -44,6 +44,7 @@ import {initSkull} from "./animation/skull/skull.js";
      { "type": "gallery", "name","blurb","columns","perPage", "images": [ { "src","title","caption" } ] }
      { "type": "photo", "src","title","caption","text" }
      { "type": "hours", "name","blurb" }   // reads SITE.business.hours
+     { "type": "review", "name","blurb", "items": [ { "label","url","platform" } ] }   // outbound CTAs; no backend
 
    Most builders are pure (read only their `block` arg). The exceptions read
    single-source-of-truth data from SITE.business via getBusiness(): `map`
@@ -1241,6 +1242,83 @@ function buildHours(block) {
     return wrapper;
 }
 
+/* review — a "leave a review" call-to-action. Pure builder.
+
+   This block does NOT collect or store reviews (the engine is no-build and
+   has no backend). It renders one or more outbound buttons that send the
+   visitor to where reviews actually live and are moderated — Google Business,
+   Facebook, etc. The "submission" happens on the platform's own page.
+
+   Shape: { name?, blurb?, items: [ { label, url, platform? } ] }
+     - label    (required) visible button text, plain.
+     - url      (required) the external review page. Skipped if missing.
+     - platform (optional) one of REVIEW_ICONS keys (google, facebook) for a
+                leading brand icon + tint class; unknown/absent = generic icon. */
+
+/* Self-contained brand glyphs for review CTAs. Kept here (not in SOCIAL_ICONS)
+   because these are link buttons, not the brand-row social icons. */
+const REVIEW_ICONS = {
+    google:
+        '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
+        '<path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"/>' +
+        '<path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.15-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>' +
+        '<path fill="#fbbc05" d="M5.85 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.67-2.84z"/>' +
+        '<path fill="#ea4335" d="M12 5.38c1.62 0 3.07.56 4.21 1.65l3.16-3.16C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.67 2.84C6.71 7.3 9.14 5.38 12 5.38z"/>' +
+        "</svg>",
+    facebook:
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="#1877f2" aria-hidden="true">' +
+        '<path d="M24 12a12 12 0 1 0-13.88 11.85v-8.38H7.08V12h3.04V9.36c0-3 1.79-4.67 4.53-4.67 1.31 0 2.68.24 2.68.24v2.95h-1.51c-1.49 0-1.95.92-1.95 1.87V12h3.32l-.53 3.47h-2.79v8.38A12 12 0 0 0 24 12z"/>' +
+        "</svg>",
+    generic:
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="m12 3 2.6 5.27 5.82.85-4.21 4.1.99 5.78L12 16.27 6.8 19l.99-5.78-4.21-4.1 5.82-.85L12 3z"/>' +
+        "</svg>",
+};
+
+function buildReview(block) {
+    const items = (block.items || []).filter((it) => it && it.url && it.label);
+    if (!items.length) return null;
+
+    const wrapper = el("div", {class: "review-block"});
+
+    if (block.name) {
+        wrapper.appendChild(el("h3", {class: "review__name"}, block.name));
+    }
+    if (block.blurb) {
+        wrapper.appendChild(el("div", {class: "prose review__blurb"}, `<p>${block.blurb}</p>`));
+    }
+
+    const list = el("div", {class: "review__list"});
+
+    items.forEach((it) => {
+        const platform = typeof it.platform === "string" ? it.platform : "";
+        const icon = REVIEW_ICONS[platform] || REVIEW_ICONS.generic;
+
+        const attrs = {
+            href: it.url,
+            class: platform ? `review__cta review__cta--${platform}` : "review__cta",
+        };
+        if (isExternalUrl(it.url)) {
+            attrs.target = "_blank";
+            attrs.rel = "noopener noreferrer";
+        }
+
+        // label is plain text → sanitizeInline escapes it. icon is authored SVG.
+        const a = el(
+            "a",
+            attrs,
+            `<span class="review__cta-icon" aria-hidden="true">${icon}</span>` +
+            `<span class="review__cta-label">${sanitizeInline(String(it.label))}</span>` +
+            `<span class="review__cta-arrow" aria-hidden="true"></span>`
+        );
+
+        list.appendChild(a);
+    });
+
+    wrapper.appendChild(list);
+    return wrapper;
+}
+
 /* ----------------------------------------------------------------------
    2D. BLOCK DISPATCH
 ---------------------------------------------------------------------- */
@@ -1257,6 +1335,7 @@ const BLOCK_RENDERERS = {
     gallery: buildGallery,
     photo: buildPhoto,
     hours: buildHours,
+    review: buildReview,
 };
 
 function renderBlock(block) {

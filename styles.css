@@ -1893,6 +1893,85 @@ a.card__link:not(:has(.card__meta)):hover::after {
 }
 
 
+/* ---- Review block ----------------------------------------------------- */
+/* Rendered by buildReview() in engine.js from a `review` block. Outbound
+   "leave a review" CTAs (Google, Facebook, …). No backend — each is a link to
+   the platform's own review page. Surfaces match cards/links so it re-themes
+   for free in light/dark and on the 404 page. */
+
+.review__name {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin: 0 0 0.6rem;
+    color: var(--text);
+}
+
+.review__blurb {
+    margin: 0 0 0.75rem;
+}
+
+.review__list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+/* A CTA row: icon + label + trailing arrow, matching .link-list a treatment. */
+.review__cta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-panel);
+    -webkit-backdrop-filter: blur(var(--panel-blur));
+    backdrop-filter: blur(var(--panel-blur));
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.review__cta:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    transform: translateY(-1px);
+}
+
+.review__cta:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.review__cta-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    line-height: 0;
+}
+
+.review__cta-label {
+    flex: 1 1 auto;
+    font-weight: 500;
+}
+
+/* Trailing arrow, mirroring .link-list__arrow. */
+.review__cta-arrow {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    background: currentColor;
+    opacity: 0.55;
+    -webkit-mask: no-repeat center / contain url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>');
+    mask: no-repeat center / contain url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>');
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.review__cta:hover .review__cta-arrow {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+
 /* That prevents Firefox/Android from hijacking random taps and opening Maps.
 Users can intentionally open it via the explicit "Open in Maps" link. */
 @media (hover: none), (pointer: coarse) {
@@ -1942,6 +2021,18 @@ Users can intentionally open it via the explicit "Open in Maps" link. */
     .link-list a:hover {
         transform: none;
         border-color: var(--border);
+    }
+
+    /* Review CTA: drop the sticky lift/tint + arrow nudge on touch. */
+    .review__cta:hover {
+        transform: none;
+        border-color: var(--border);
+        background: var(--bg-panel);
+    }
+
+    .review__cta:hover .review__cta-arrow {
+        transform: none;
+        opacity: 0.55;
     }
 
     /* Table: drop the sticky row highlight on touch (matches the rest). */
